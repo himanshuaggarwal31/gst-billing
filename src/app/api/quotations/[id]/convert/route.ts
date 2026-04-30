@@ -26,10 +26,10 @@ export async function POST(
     return NextResponse.json(apiError("Viewers cannot convert quotations", "FORBIDDEN"), { status: 403 });
   }
 
-  // Load quotation with line items
+  // Load quotation with line items and client state
   const { data: quote, error: qErr } = await supabase
     .from("quotations")
-    .select(`*, quotation_line_items(*)`)
+    .select(`*, clients(state_code), quotation_line_items(*)`)
     .eq("id", id)
     .eq("user_id", ownerId)
     .single();
@@ -72,6 +72,7 @@ export async function POST(
       invoice_date: today,
       due_date: null,
       seller_state_code: quote.seller_state_code,
+      buyer_state_code: quote.clients.state_code,
       notes: quote.notes,
       theme: quote.theme,
       taxable_amount: quote.taxable_amount,
@@ -91,6 +92,7 @@ export async function POST(
   }
 
   // Copy line items to invoice_line_items
+  const isInterState = quote.seller_state_code !== quote.clients.state_code;
   const lineItems = (quote.quotation_line_items as Array<{
     description: string;
     hsn_sac_code: string;
@@ -104,6 +106,7 @@ export async function POST(
     sort_order: number;
   }>).map((li) => ({
     invoice_id: invoice.id,
+    user_id: ownerId,
     description: li.description,
     hsn_sac_code: li.hsn_sac_code,
     quantity: li.quantity,
@@ -111,8 +114,11 @@ export async function POST(
     gst_rate: li.gst_rate,
     discount_percent: li.discount_percent,
     taxable_amount: li.taxable_amount,
-    gst_amount: li.gst_amount,
-    total_amount: li.total_amount,
+    cgst: isInterState ? 0 : li.gst_amount / 2,
+    sgst: isInterState ? 0 : li.gst_amount / 2,
+    igst: isInterState ? li.gst_amount : 0,
+    total_gst: li.gst_amount,
+    line_total: li.total_amount,
     sort_order: li.sort_order,
   }));
 
