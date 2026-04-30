@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { calculateInvoiceTotals, INDIAN_STATE_CODES, GST_RATES } from "@/lib/gst";
+import { calculateInvoiceTotals, INDIAN_STATE_CODES, GST_RATES, stateLabel } from "@/lib/gst";
 import { HSN_SAC_CODES } from "@/lib/hsn-master";
 import type { Client } from "@/components/clients/ClientFormDialog";
 import type { Product } from "@/components/products/ProductFormDialog";
@@ -272,7 +272,7 @@ export default function InvoiceForm({ initialData }: Props) {
               <option value="">Select client…</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} ({c.state_code.trim() ? `${c.state_code.trim()} — ${INDIAN_STATE_CODES[c.state_code.trim()] ?? c.state_code.trim()}` : "no state"})
+                  {c.name} ({c.state_code.trim() ? stateLabel(c.state_code.trim()) : "no state"})
                 </option>
               ))}
             </select>
@@ -332,10 +332,8 @@ export default function InvoiceForm({ initialData }: Props) {
               required
             >
               <option value="">Select state…</option>
-              {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                <option key={code} value={code}>
-                  {code} — {name}
-                </option>
+              {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                <option key={code} value={code}>{stateLabel(code)}</option>
               ))}
             </select>
           </div>

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { INDIAN_STATE_CODES } from "@/lib/gst";
+import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
 import { Badge } from "@/components/ui/badge";
 
 type Profile = {
@@ -277,10 +277,8 @@ export default function SettingsPage() {
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                      <SelectItem key={code} value={code}>
-                        {code} – {name}
-                      </SelectItem>
+                    {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                      <SelectItem key={code} value={code}>{stateLabel(code)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

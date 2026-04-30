@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INDIAN_STATE_CODES } from "@/lib/gst";
+import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
 
 export type Client = {
   id: string;
@@ -149,8 +149,8 @@ export default function ClientFormDialog({ open, client, onClose, onSaved }: Pro
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                    <SelectItem key={code} value={code}>{code} — {name}</SelectItem>
+                  {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                    <SelectItem key={code} value={code}>{stateLabel(code)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
