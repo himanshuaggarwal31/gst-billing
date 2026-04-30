@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ const METHOD_ICONS: Record<string, string> = {
 };
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
 }
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -112,135 +112,160 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
   }
 
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount), 0);
-  const outstanding = invoice.total_amount - totalPaid;
-  const paidPct = Math.min(100, (totalPaid / invoice.total_amount) * 100);
+  const outstanding = Math.max(0, invoice.total_amount - totalPaid);
+  const paidPct = Math.min(100, invoice.total_amount > 0 ? (totalPaid / invoice.total_amount) * 100 : 0);
+  const isFullyPaid = outstanding === 0 && totalPaid > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
-        {/* ── Header / Invoice summary ── */}
-        <div className="bg-gray-900 text-white px-6 py-5">
-          <DialogHeader>
-            <DialogTitle className="text-white text-lg font-semibold">
-              Record Payment
-            </DialogTitle>
-            <DialogDescription className="text-gray-400 text-sm mt-0.5">
-              Invoice #{invoice.invoice_number}
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="max-w-3xl p-0 overflow-hidden gap-0">
+        <div className="flex min-h-0">
 
-          {/* Amount cards */}
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            <div className="rounded-lg bg-white/10 px-3 py-2.5 text-center">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Invoice Total</p>
-              <p className="text-sm font-bold mt-0.5 tabular-nums">{fmt(invoice.total_amount)}</p>
-            </div>
-            <div className="rounded-lg bg-emerald-500/20 px-3 py-2.5 text-center">
-              <p className="text-[10px] text-emerald-300 uppercase tracking-wide">Paid</p>
-              <p className="text-sm font-bold text-emerald-300 mt-0.5 tabular-nums">{fmt(totalPaid)}</p>
-            </div>
-            <div className={`rounded-lg px-3 py-2.5 text-center ${outstanding > 0 ? "bg-amber-500/20" : "bg-emerald-500/20"}`}>
-              <p className={`text-[10px] uppercase tracking-wide ${outstanding > 0 ? "text-amber-300" : "text-emerald-300"}`}>
-                Outstanding
-              </p>
-              <p className={`text-sm font-bold mt-0.5 tabular-nums ${outstanding > 0 ? "text-amber-300" : "text-emerald-300"}`}>
-                {fmt(Math.max(0, outstanding))}
-              </p>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-emerald-400 transition-all duration-500"
-              style={{ width: `${paidPct}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="px-6 py-5 space-y-5">
-          {/* ── Payment history ── */}
-          {loadingHistory && (
-            <p className="text-sm text-muted-foreground text-center py-2">Loading history…</p>
-          )}
-
-          {!loadingHistory && payments.length > 0 && (
+          {/* ── Left sidebar: invoice summary ── */}
+          <div className="w-56 shrink-0 bg-slate-50 border-r flex flex-col p-5 gap-5">
+            {/* Invoice badge */}
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Payment History
-              </p>
-              <div className="rounded-xl border divide-y overflow-hidden">
-                {payments.map((p) => (
-                  <div key={p.id} className="px-4 py-3 flex items-start justify-between gap-3 bg-white hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <span className="text-xl mt-0.5 shrink-0">{METHOD_ICONS[p.method] ?? "💰"}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-emerald-700 tabular-nums">{fmt(Number(p.amount))}</span>
-                          <span className="text-xs text-muted-foreground">{fmtDate(p.payment_date)}</span>
-                          <span className="text-[11px] bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">
-                            {METHOD_LABELS[p.method] ?? p.method}
-                          </span>
-                        </div>
-                        {p.reference_number && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Ref: <span className="font-mono text-gray-700">{p.reference_number}</span>
-                          </p>
-                        )}
-                        {p.notes && <p className="text-xs text-muted-foreground mt-0.5 truncate">{p.notes}</p>}
-                        {p.recorded_by_email && (
-                          <p className="text-[11px] text-muted-foreground/60 mt-0.5">by {p.recorded_by_email}</p>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={removingId === p.id}
-                      onClick={() => handleDelete(p.id)}
-                      className="text-[11px] text-gray-300 hover:text-red-500 transition-colors shrink-0 mt-1 font-medium"
-                    >
-                      {removingId === p.id ? "…" : "Remove"}
-                    </button>
-                  </div>
-                ))}
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Invoice</span>
+              <p className="text-base font-bold text-slate-800 mt-0.5">#{invoice.invoice_number}</p>
+            </div>
+
+            {/* Amounts */}
+            <div className="space-y-3">
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Invoice Total</p>
+                <p className="text-xl font-bold text-slate-800 tabular-nums">{fmt(invoice.total_amount)}</p>
+              </div>
+              <div className="h-px bg-slate-200" />
+              <div>
+                <p className="text-[10px] font-semibold text-emerald-500 uppercase tracking-widest mb-0.5">Paid</p>
+                <p className="text-lg font-bold text-emerald-600 tabular-nums">{fmt(totalPaid)}</p>
+              </div>
+              <div>
+                <p className={`text-[10px] font-semibold uppercase tracking-widest mb-0.5 ${outstanding > 0 ? "text-amber-500" : "text-emerald-500"}`}>
+                  Outstanding
+                </p>
+                <p className={`text-lg font-bold tabular-nums ${outstanding > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                  {fmt(outstanding)}
+                </p>
               </div>
             </div>
-          )}
 
-          {/* ── New payment form ── */}
-          <div>
-            {payments.length > 0 && (
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Add Another Payment
+            {/* Progress */}
+            <div className="space-y-1.5 mt-auto">
+              <div className="flex justify-between text-[10px] font-medium text-slate-400">
+                <span>Collected</span>
+                <span>{Math.round(paidPct)}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${isFullyPaid ? "bg-emerald-500" : "bg-blue-500"}`}
+                  style={{ width: `${paidPct}%` }}
+                />
+              </div>
+              {isFullyPaid && (
+                <p className="text-[11px] text-emerald-600 font-semibold text-center mt-1">✓ Fully paid</p>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right: history + form ── */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Modal title */}
+            <div className="px-6 pt-5 pb-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Record Payment</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {payments.length > 0 ? "Add another payment or view history below." : "Enter the payment details below."}
               </p>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Amount + Date + Method on one row */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Amount (₹) <span className="text-red-500">*</span></Label>
-                  <Input
-                    type="number" step="0.01" min="0.01"
-                    value={form.amount}
-                    onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                    placeholder={String(invoice.total_amount)}
-                    className="tabular-nums font-mono"
-                    required
-                  />
+            </div>
+
+            <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+              {/* Payment history */}
+              {loadingHistory && (
+                <p className="text-sm text-muted-foreground py-2">Loading history…</p>
+              )}
+
+              {!loadingHistory && payments.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Payment History ({payments.length})
+                  </p>
+                  <div className="rounded-lg border divide-y">
+                    {payments.map((p) => (
+                      <div key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-base shrink-0">
+                          {METHOD_ICONS[p.method] ?? "💰"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-gray-900 tabular-nums">{fmt(Number(p.amount))}</span>
+                            <span className="text-xs text-muted-foreground">{fmtDate(p.payment_date)}</span>
+                            <span className="text-[10px] bg-slate-100 text-slate-500 rounded-full px-2 py-0.5 font-medium">
+                              {METHOD_LABELS[p.method] ?? p.method}
+                            </span>
+                          </div>
+                          {(p.reference_number || p.notes) && (
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                              {p.reference_number && <span className="font-mono mr-2">{p.reference_number}</span>}
+                              {p.notes}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={removingId === p.id}
+                          onClick={() => handleDelete(p.id)}
+                          className="text-xs text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 font-medium shrink-0"
+                        >
+                          {removingId === p.id ? "…" : "Remove"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Payment Date <span className="text-red-500">*</span></Label>
-                  <Input
-                    type="date"
-                    value={form.payment_date}
-                    onChange={(e) => setForm((f) => ({ ...f, payment_date: e.target.value }))}
-                    required
-                  />
+              )}
+
+              {/* New payment form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {payments.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">New payment</span>
+                    <div className="flex-1 h-px bg-gray-100" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">
+                      Amount (₹) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      type="number" step="0.01" min="0.01"
+                      value={form.amount}
+                      onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                      placeholder="0.00"
+                      className="font-mono text-base h-10"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">
+                      Payment Date <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      type="date"
+                      value={form.payment_date}
+                      onChange={(e) => setForm((f) => ({ ...f, payment_date: e.target.value }))}
+                      className="h-10"
+                      required
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium">Payment Method</Label>
                   <Select value={form.method} onValueChange={(v) => setForm((f) => ({ ...f, method: v }))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,42 +277,48 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">
-                  Reference Number
-                  <span className="text-xs text-muted-foreground font-normal ml-1.5">UTR, cheque no., UPI ref…</span>
-                </Label>
-                <Input
-                  value={form.reference_number}
-                  onChange={(e) => setForm((f) => ({ ...f, reference_number: e.target.value }))}
-                  placeholder="e.g. UTR123456789"
-                  className="font-mono"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">
+                      Reference No.
+                      <span className="text-xs text-muted-foreground font-normal ml-1">UTR / cheque / UPI</span>
+                    </Label>
+                    <Input
+                      value={form.reference_number}
+                      onChange={(e) => setForm((f) => ({ ...f, reference_number: e.target.value }))}
+                      placeholder="e.g. UTR123456789"
+                      className="font-mono h-10"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">
+                      Notes
+                      <span className="text-xs text-muted-foreground font-normal ml-1">optional</span>
+                    </Label>
+                    <Input
+                      value={form.notes}
+                      onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                      placeholder="e.g. Partial payment, TDS deducted"
+                      className="h-10"
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">
-                  Notes
-                  <span className="text-xs text-muted-foreground font-normal ml-1.5">optional</span>
-                </Label>
-                <Textarea
-                  rows={2}
-                  value={form.notes}
-                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  placeholder="e.g. Partial payment, TDS deducted…"
-                  className="resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-1">
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" disabled={saving} className="px-6">
-                  {saving ? "Saving…" : "Record Payment"}
-                </Button>
-              </div>
-            </form>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <button
+                    type="button"
+                    onClick={() => onOpenChange(false)}
+                    className="text-sm text-muted-foreground hover:text-gray-900 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <Button type="submit" disabled={saving} className="px-8 h-10">
+                    {saving ? "Saving…" : "Record Payment"}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </DialogContent>
