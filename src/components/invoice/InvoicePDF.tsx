@@ -242,7 +242,7 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function InvoicePDF({ data }: { data: InvoicePDFData }) {
+export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel = "Invoice No." }: { data: InvoicePDFData; documentTitle?: string; documentLabel?: string }) {
   const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
   const t = THEMES[(data.theme as InvoiceTheme) ?? "classic"] ?? THEMES.classic;
   const effectiveStatusStyle = data.pdf_status_style ?? "stamp";
@@ -277,9 +277,9 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
             )}
           </View>
           <View style={styles.invoiceMeta}>
-            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>TAX INVOICE</Text>
+            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>{documentTitle}</Text>
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Invoice No.</Text>
+              <Text style={styles.metaLabel}>{documentLabel}</Text>
               <Text style={styles.metaValue}>{data.invoice_number}</Text>
             </View>
             <View style={styles.metaRow}>

@@ -188,6 +188,8 @@ export default function NewQuotationPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!header.client_id) { toast.error("Please select a client"); return; }
+    if (!header.seller_state_code) { toast.error("Please select your seller state"); return; }
     if (!totals) { toast.error("Add at least one line item with quantity and rate"); return; }
     setSubmitting(true);
     try {
@@ -206,12 +208,17 @@ export default function NewQuotationPage() {
             })),
         }),
       });
-      const json = await res.json();
-      if (json.error) toast.error(json.error.message);
-      else {
+      let json: Record<string, unknown> = {};
+      try { json = await res.json(); } catch { /* empty body */ }
+      if (!res.ok || json.error) {
+        toast.error((json.error as { message?: string })?.message ?? `Server error (${res.status})`);
+      } else {
         toast.success(`Quotation ${header.quote_number} created`);
         router.push("/dashboard/quotations");
       }
+    } catch (err) {
+      toast.error("Network error — please try again");
+      console.error(err);
     } finally { setSubmitting(false); }
   }
 
@@ -230,7 +237,7 @@ export default function NewQuotationPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* Client + meta */}
         <div className="rounded-xl border bg-white p-6 space-y-4">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Details</h2>

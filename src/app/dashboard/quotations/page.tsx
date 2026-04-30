@@ -114,7 +114,7 @@ export default function QuotationsPage() {
                 <TableHead className="text-right font-semibold text-gray-700">Amount</TableHead>
                 <TableHead className="text-right font-semibold text-gray-700">GST</TableHead>
                 <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                <TableHead className="w-20 text-right pr-4 font-semibold text-gray-700">Actions</TableHead>
+                <TableHead className="text-right pr-4 font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,6 +154,15 @@ export default function QuotationsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="pr-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2.5 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        onClick={() => window.open(`/api/quotations/${q.id}/pdf`, "_blank")}
+                      >
+                        PDF
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700 hover:bg-gray-100">
@@ -195,6 +204,7 @@ export default function QuotationsPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

@@ -7,7 +7,7 @@ import { resolveOwnerId } from "@/lib/resolve-owner";
 
 const LineItemSchema = z.object({
   description: z.string().min(1),
-  hsn_sac_code: z.string().min(1).default(""),
+  hsn_sac_code: z.string().default(""),
   quantity: z.number().positive(),
   rate: z.number().positive(),
   gst_rate: z.number().min(0).max(28),
