@@ -117,7 +117,7 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl p-0 overflow-hidden">
         {/* ── Header / Invoice summary ── */}
         <div className="bg-gray-900 text-white px-6 py-5">
           <DialogHeader>
@@ -158,7 +158,7 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-5 overflow-y-auto max-h-[60vh]">
+        <div className="px-6 py-5 space-y-5">
           {/* ── Payment history ── */}
           {loadingHistory && (
             <p className="text-sm text-muted-foreground text-center py-2">Loading history…</p>
@@ -215,7 +215,8 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
               </p>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              {/* Amount + Date + Method on one row */}
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium">Amount (₹) <span className="text-red-500">*</span></Label>
                   <Input
@@ -236,22 +237,21 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
                     required
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Payment Method</Label>
-                <Select value={form.method} onValueChange={(v) => setForm((f) => ({ ...f, method: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(METHOD_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        <span className="mr-2">{METHOD_ICONS[value]}</span>{label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Payment Method</Label>
+                  <Select value={form.method} onValueChange={(v) => setForm((f) => ({ ...f, method: v }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(METHOD_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          <span className="mr-2">{METHOD_ICONS[value]}</span>{label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-1.5">

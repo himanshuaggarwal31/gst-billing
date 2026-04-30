@@ -393,7 +393,7 @@ export default function QuotationsPage() {
 
       {/* ── New Quotation Dialog ── */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
           <div className="px-6 pt-6 pb-4 border-b bg-gray-50 rounded-t-lg">
             <DialogHeader>
               <DialogTitle className="text-xl">New Quotation</DialogTitle>
@@ -403,10 +403,10 @@ export default function QuotationsPage() {
             </DialogHeader>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
-            {/* Client + meta */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+          <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
+            {/* Client + meta — 3 columns */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-1.5">
                 <Label className="text-sm font-medium">Client <span className="text-red-500">*</span></Label>
                 <select
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -454,7 +454,7 @@ export default function QuotationsPage() {
                   </div>
                 )}
               </div>
-              <div className="col-span-2 space-y-1.5">
+              <div className="col-span-3 space-y-1.5">
                 <Label className="text-sm font-medium">Notes</Label>
                 <Textarea value={header.notes} onChange={(e) => set("notes", e.target.value)}
                   rows={2} placeholder="Validity terms, payment terms, scope of work, etc." className="resize-none" />
