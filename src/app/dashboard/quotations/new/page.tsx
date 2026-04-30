@@ -155,12 +155,15 @@ export default function NewQuotationPage() {
       fetch("/api/clients").then((r) => r.json()),
       fetch("/api/products").then((r) => r.json()),
       fetch("/api/quotations/next-number").then((r) => r.json()),
-    ]).then(([cJson, pJson, numJson]) => {
+      fetch("/api/profile").then((r) => r.json()),
+    ]).then(([cJson, pJson, numJson, profileJson]) => {
       if (cJson.data) setClients(cJson.data);
       if (pJson.data) setProducts(pJson.data);
-      if (numJson.data?.next_number) {
-        setHeader((h) => ({ ...h, quote_number: numJson.data.next_number }));
-      }
+      setHeader((h) => ({
+        ...h,
+        ...(numJson.data?.next_number ? { quote_number: numJson.data.next_number } : {}),
+        ...(profileJson.data?.state_code ? { seller_state_code: profileJson.data.state_code } : {}),
+      }));
     });
   }, []);
 

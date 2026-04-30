@@ -122,7 +122,16 @@ export default function InvoiceForm({ initialData }: Props) {
     fetch("/api/products")
       .then((r) => r.json())
       .then((j) => j.data && setProducts(j.data));
-    if (!isEdit) fetchNextNumber();
+    if (!isEdit) {
+      fetchNextNumber();
+      fetch("/api/profile")
+        .then((r) => r.json())
+        .then((j) => {
+          if (j.data?.state_code) {
+            setHeader((h) => ({ ...h, seller_state_code: h.seller_state_code || j.data.state_code }));
+          }
+        });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
