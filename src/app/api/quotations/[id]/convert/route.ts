@@ -60,9 +60,12 @@ export async function POST(
     }
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const clientState = (quote.clients.state_code as string)?.trim() ?? "";
+  const sellerState = (quote.seller_state_code as string)?.trim() ?? "";
 
   // Create invoice
+  const today = new Date().toISOString().split("T")[0];
+  const isInterState = sellerState !== clientState;
   const { data: invoice, error: invErr } = await supabase
     .from("invoices")
     .insert({
@@ -71,8 +74,8 @@ export async function POST(
       invoice_number: nextNumber,
       invoice_date: today,
       due_date: null,
-      seller_state_code: quote.seller_state_code,
-      buyer_state_code: quote.clients.state_code,
+      seller_state_code: sellerState,
+      buyer_state_code: clientState,
       notes: quote.notes,
       theme: quote.theme,
       taxable_amount: quote.taxable_amount,
@@ -92,7 +95,6 @@ export async function POST(
   }
 
   // Copy line items to invoice_line_items
-  const isInterState = quote.seller_state_code !== quote.clients.state_code;
   const lineItems = (quote.quotation_line_items as Array<{
     description: string;
     hsn_sac_code: string;

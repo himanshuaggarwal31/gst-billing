@@ -147,6 +147,7 @@ export default function NewQuotationPage() {
   const [header, setHeader] = useState({
     client_id: "", quote_number: "", quote_date: today,
     valid_until: validUntilDefault, seller_state_code: "", notes: "",
+    theme: "classic" as "classic" | "minimal" | "modern",
   });
   const [lines, setLines] = useState<LineItemForm[]>([{ ...EMPTY_LINE }]);
 
@@ -298,6 +299,19 @@ export default function NewQuotationPage() {
               <Textarea value={header.notes} onChange={(e) => set("notes", e.target.value)}
                 rows={2} placeholder="Validity terms, payment terms, scope of work, etc." className="resize-none" />
             </div>
+            <div className="col-span-3 space-y-1.5">
+              <Label className="text-sm font-medium">Theme</Label>
+              <div className="flex gap-3">
+                {(["classic", "minimal", "modern"] as const).map((t) => (
+                  <button key={t} type="button" onClick={() => set("theme", t)}
+                    className={`flex-1 rounded-lg border-2 py-2 text-sm font-medium capitalize transition-colors ${
+                      header.theme === t
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}>{t}</button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -327,18 +341,19 @@ export default function NewQuotationPage() {
                   <span>Taxable Amount</span>
                   <span className="tabular-nums">{fmt(totals.summary.taxableAmount)}</span>
                 </div>
-                {totals.summary.totalCgst > 0 && (<>
+                {isInterState ? (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>CGST</span><span className="tabular-nums">{fmt(totals.summary.totalCgst)}</span>
+                    <span>IGST</span><span className="tabular-nums">{fmt(totals.summary.igst)}</span>
                   </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>SGST</span><span className="tabular-nums">{fmt(totals.summary.totalSgst)}</span>
-                  </div>
-                </>)}
-                {totals.summary.totalIgst > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>IGST</span><span className="tabular-nums">{fmt(totals.summary.totalIgst)}</span>
-                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>CGST</span><span className="tabular-nums">{fmt(totals.summary.cgst)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>SGST</span><span className="tabular-nums">{fmt(totals.summary.sgst)}</span>
+                    </div>
+                  </>
                 )}
                 <div className="border-t pt-2 flex justify-between font-bold text-base text-gray-900">
                   <span>Total</span>

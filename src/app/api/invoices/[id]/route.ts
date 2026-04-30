@@ -90,7 +90,7 @@ export async function PATCH(
   // Full invoice update
   const parsed = FullUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"), { status: 400 });
+    return NextResponse.json(apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"), { status: 400 });
   }
 
   const { line_items, seller_state_code, theme, ...invoiceFields } = parsed.data;

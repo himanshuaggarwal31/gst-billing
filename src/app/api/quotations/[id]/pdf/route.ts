@@ -38,9 +38,9 @@ export async function GET(
     pdf_status_style: "none" as const,
     notes: quote.notes ?? null,
     theme: (quote.theme ?? "classic") as "classic" | "minimal" | "modern",
-    seller_state_code: quote.seller_state_code,
-    buyer_state_code: quote.clients.state_code,
-    is_inter_state: quote.seller_state_code !== quote.clients.state_code,
+    seller_state_code: (quote.seller_state_code as string)?.trim(),
+    buyer_state_code: (quote.clients.state_code as string)?.trim(),
+    is_inter_state: (quote.seller_state_code as string)?.trim() !== (quote.clients.state_code as string)?.trim(),
     taxable_amount: quote.taxable_amount,
     total_cgst: quote.total_cgst,
     total_sgst: quote.total_sgst,
@@ -65,7 +65,7 @@ export async function GET(
       quantity: number; rate: number; discount_percent: number; gst_rate: number;
       taxable_amount: number; gst_amount: number; total_amount: number;
     }) => {
-      const isInter = quote.seller_state_code !== quote.clients.state_code;
+      const isInter = (quote.seller_state_code as string)?.trim() !== (quote.clients.state_code as string)?.trim();
       return {
         sort_order: li.sort_order,
         description: li.description,

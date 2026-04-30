@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
+import { INDIAN_STATE_CODES } from "@/lib/gst";
 
 // ── Theme definitions ─────────────────────────────────────────────────────────
 export type InvoiceTheme = "classic" | "minimal" | "modern";
@@ -308,7 +309,7 @@ export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel 
             <Text style={styles.partyName}>{data.seller.business_name}</Text>
             {data.seller.gstin && <Text style={styles.partyDetail}>GSTIN: {data.seller.gstin}</Text>}
             {data.seller.pan && <Text style={styles.partyDetail}>PAN: {data.seller.pan}</Text>}
-            <Text style={styles.partyDetail}>State Code: {data.seller_state_code}</Text>
+            <Text style={styles.partyDetail}>State: {data.seller_state_code}{INDIAN_STATE_CODES[data.seller_state_code?.trim() ?? ""] ? ` — ${INDIAN_STATE_CODES[data.seller_state_code?.trim() ?? ""]}` : ""}</Text>
           </View>
           <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
             <Text style={styles.partyName}>{data.client.name}</Text>
@@ -320,7 +321,7 @@ export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel 
               </Text>
             )}
             {data.client.email && <Text style={styles.partyDetail}>{data.client.email}</Text>}
-            <Text style={styles.partyDetail}>State Code: {data.buyer_state_code}</Text>
+            <Text style={styles.partyDetail}>State: {data.buyer_state_code}{INDIAN_STATE_CODES[data.buyer_state_code?.trim() ?? ""] ? ` — ${INDIAN_STATE_CODES[data.buyer_state_code?.trim() ?? ""]}` : ""}</Text>
           </View>
         </View>
 
