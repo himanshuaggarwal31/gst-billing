@@ -122,7 +122,7 @@ export function calculateInvoiceTotals(
   sellerStateCode: string,
   buyerStateCode: string
 ): { lines: LineItemCalculated[]; summary: GSTBreakdown } {
-  const isInterState = sellerStateCode !== buyerStateCode;
+  const isInterState = sellerStateCode.trim() !== buyerStateCode.trim();
 
   const lines = items.map((item) => calculateLineItem(item, isInterState));
 
