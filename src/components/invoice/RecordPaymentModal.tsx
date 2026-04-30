@@ -118,7 +118,7 @@ export function RecordPaymentModal({ open, onOpenChange, invoice, onSuccess }: R
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-4xl p-0 overflow-hidden gap-0">
         <div className="flex min-h-0">
 
           {/* ── Left sidebar: invoice summary ── */}
