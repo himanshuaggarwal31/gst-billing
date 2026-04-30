@@ -14,6 +14,7 @@ const navItems = [
   { label: "Expenses", href: "/dashboard/expenses" },
   { label: "Recurring", href: "/dashboard/recurring" },
   { label: "Credit Notes", href: "/dashboard/credit-notes" },
+  { label: "GST Reports", href: "/dashboard/gst-reports" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Settings", href: "/dashboard/settings" },
 ];

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { calculateInvoiceTotals, INDIAN_STATE_CODES, GST_RATES } from "@/lib/gst";
+import { HSN_SAC_CODES } from "@/lib/hsn-master";
 import type { Client } from "@/components/clients/ClientFormDialog";
 import type { Product } from "@/components/products/ProductFormDialog";
 
@@ -460,6 +461,7 @@ export default function InvoiceForm({ initialData }: Props) {
                       value={line.hsn_sac_code}
                       onChange={(e) => setLine(idx, "hsn_sac_code", e.target.value)}
                       placeholder="998314"
+                      list="hsn-sac-list"
                       required
                     />
                   </div>
@@ -562,6 +564,15 @@ export default function InvoiceForm({ initialData }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* HSN/SAC autocomplete datalist */}
+      <datalist id="hsn-sac-list">
+        {HSN_SAC_CODES.map((entry) => (
+          <option key={entry.code} value={entry.code}>
+            {entry.description} ({entry.gstRate}% GST)
+          </option>
+        ))}
+      </datalist>
     </form>
   );
 }

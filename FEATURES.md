@@ -61,7 +61,14 @@ Send a payment reminder email to clients with overdue or pending invoices direct
 
 ### � GSTR-1 Export
 One-click CSV export of all invoices in GSTR-1 compatible format (B2B and B2C sections). Choose any month, download instantly, and hand it to your accountant or upload directly to the GST portal.
+### 📋 GSTR-3B Export
+Download a ready-to-file GSTR-3B summary CSV for any month — outward supplies, ITC from expenses, and net GST payable — in one click. Covers Table 3.1 (output tax) and Table 4A (ITC). Works alongside GSTR-1 for complete monthly return filing.
 
+### 🧮 ITC Ledger (Input Tax Credit)
+See exactly how much GST you can claim back from your business expenses each month. The ITC Ledger shows GST collected on invoices, GST paid on purchases, and your net monthly liability — so you never overpay.
+
+### 🔢 HSN/SAC Code Autocomplete
+Start typing a product code or description and the invoice form instantly suggests matching HSN (goods) and SAC (services) codes with their standard GST rates. Covers 80+ common codes across IT services, manufacturing, trading, and more.
 ### 📈 Business Analytics
 See your revenue, expenses, and GST in interactive charts. Track monthly trends, identify your top clients by revenue, and know your net GST liability at a glance — without touching a spreadsheet.
 
