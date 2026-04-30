@@ -272,7 +272,7 @@ export default function InvoiceForm({ initialData }: Props) {
               <option value="">Select client…</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} ({c.state_code})
+                  {c.name} ({c.state_code.trim() ? `${c.state_code.trim()} — ${INDIAN_STATE_CODES[c.state_code.trim()] ?? c.state_code.trim()}` : "no state"})
                 </option>
               ))}
             </select>

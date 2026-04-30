@@ -252,7 +252,7 @@ export default function NewQuotationPage() {
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 value={header.client_id} onChange={(e) => set("client_id", e.target.value)} required>
                 <option value="">Select client…</option>
-                {clients.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.state_code})</option>)}
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.state_code.trim() ? `${c.state_code.trim()} — ${INDIAN_STATE_CODES[c.state_code.trim()] ?? c.state_code.trim()}` : "no state"})</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
