@@ -74,11 +74,11 @@ Issue a credit note against any invoice for returns or corrections. Fully GST-co
 ### 💸 Expense Tracking
 Log your business purchases with GST paid. The app calculates your net GST liability (GST collected − GST paid on purchases) — exactly what your CA needs each quarter.
 
+### � Payment Tracking
+Record partial or full payments against any invoice — with payment date, method (bank transfer, UPI, cheque, cash, card), and reference number. The invoice status updates automatically to Pending, Partial, or Paid. Full transaction history per invoice, with the ability to remove incorrect entries.
+
 ### 👨‍💼 Accountant / CA Access
 Invite your chartered accountant with read-only access to your account. They can view all invoices and expenses without you sending files every month.
-
-### 📊 GSTR-1 Export *(coming soon)*
-One-click export of all invoices in the exact format required for GSTR-1 filing on the GST portal. Your accountant will thank you.
 
 ---
 
