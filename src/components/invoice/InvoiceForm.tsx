@@ -191,7 +191,7 @@ export default function InvoiceForm({ initialData }: Props) {
   const selectedClient = clients.find((c) => c.id === header.client_id);
   const isInterState =
     header.seller_state_code && selectedClient
-      ? header.seller_state_code !== selectedClient.state_code
+      ? header.seller_state_code.trim() !== selectedClient.state_code.trim()
       : false;
 
   async function handleSubmit(e: React.FormEvent) {

@@ -188,7 +188,7 @@ export default function NewQuotationPage() {
   }, [lines, header.seller_state_code, header.client_id, clients])(); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isInterState = header.seller_state_code && selectedClient
-    ? header.seller_state_code !== selectedClient.state_code : false;
+    ? header.seller_state_code.trim() !== selectedClient.state_code.trim() : false;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
