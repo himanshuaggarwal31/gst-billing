@@ -60,7 +60,28 @@ export async function GET(
       logo_url: profile?.logo_url ?? null,
     },
     client: quote.clients,
-    line_items: quote.quotation_line_items,
+    line_items: quote.quotation_line_items.map((li: {
+      sort_order: number; description: string; hsn_sac_code: string;
+      quantity: number; rate: number; discount_percent: number; gst_rate: number;
+      taxable_amount: number; gst_amount: number; total_amount: number;
+    }) => {
+      const isInter = quote.seller_state_code !== quote.clients.state_code;
+      return {
+        sort_order: li.sort_order,
+        description: li.description,
+        hsn_sac_code: li.hsn_sac_code,
+        quantity: li.quantity,
+        rate: li.rate,
+        discount_percent: li.discount_percent,
+        gst_rate: li.gst_rate,
+        taxable_amount: li.taxable_amount,
+        cgst: isInter ? 0 : li.gst_amount / 2,
+        sgst: isInter ? 0 : li.gst_amount / 2,
+        igst: isInter ? li.gst_amount : 0,
+        total_gst: li.gst_amount,
+        line_total: li.total_amount,
+      };
+    }),
   };
 
   const buffer = await renderToBuffer(
