@@ -1,0 +1,443 @@
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
+
+// ── Theme definitions ─────────────────────────────────────────────────────────
+export type InvoiceTheme = "classic" | "minimal" | "modern";
+
+const THEMES: Record<InvoiceTheme, {
+  accent: string;
+  tableHeaderBg: string;
+  tableHeaderColor: string;
+  titleColor: string;
+  partyBg: string;
+  partyBorder: string;
+  grandTotalColor: string;
+  dividerColor: string;
+}> = {
+  classic: {
+    accent: "#1a56db",
+    tableHeaderBg: "#1a56db",
+    tableHeaderColor: "#fff",
+    titleColor: "#1a56db",
+    partyBg: "#f9fafb",
+    partyBorder: "#e5e7eb",
+    grandTotalColor: "#1a56db",
+    dividerColor: "#1a56db",
+  },
+  minimal: {
+    accent: "#111827",
+    tableHeaderBg: "#f3f4f6",
+    tableHeaderColor: "#374151",
+    titleColor: "#111827",
+    partyBg: "#ffffff",
+    partyBorder: "#d1d5db",
+    grandTotalColor: "#111827",
+    dividerColor: "#9ca3af",
+  },
+  modern: {
+    accent: "#7c3aed",
+    tableHeaderBg: "#7c3aed",
+    tableHeaderColor: "#fff",
+    titleColor: "#7c3aed",
+    partyBg: "#faf5ff",
+    partyBorder: "#e9d5ff",
+    grandTotalColor: "#7c3aed",
+    dividerColor: "#7c3aed",
+  },
+};
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: "Helvetica",
+    fontSize: 9,
+    padding: 40,
+    color: "#111",
+  },
+  // Header
+  headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 28 },
+  companyBlock: { maxWidth: "55%" },
+  logoImg: { width: 120, height: 40, objectFit: "contain", marginBottom: 6 },
+  companyName: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 4 },
+  companyDetail: { fontSize: 8, color: "#555", marginBottom: 2 },
+  invoiceMeta: { alignItems: "flex-end" },
+  invoiceTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", color: "#1a56db", marginBottom: 6 },
+  metaRow: { flexDirection: "row", marginBottom: 2 },
+  metaLabel: { fontSize: 8, color: "#888", width: 80, textAlign: "right" },
+  metaValue: { fontSize: 8, fontFamily: "Helvetica-Bold", marginLeft: 6 },
+  // Parties
+  partiesRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
+  partyBox: {
+    width: "47%",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 4,
+    padding: 10,
+    backgroundColor: "#f9fafb",
+  },
+  partyLabel: { fontSize: 7, color: "#888", textTransform: "uppercase", marginBottom: 4, letterSpacing: 0.5 },
+  partyName: { fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 3 },
+  partyDetail: { fontSize: 8, color: "#444", marginBottom: 2 },
+  // Table
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#1a56db",
+    color: "#fff",
+    padding: "6 8",
+    borderRadius: 2,
+    marginBottom: 0,
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    padding: "5 8",
+  },
+  tableRowAlt: { backgroundColor: "#f9fafb" },
+  // Column widths — must total exactly 100% to avoid react-pdf flex drift
+  // 4+22+10+6+14+6+14+8+16 = 100
+  colSno:     { width: "4%" },
+  colDesc:    { width: "22%" },
+  colHsn:     { width: "10%" },
+  colQty:     { width: "6%",  textAlign: "right" },
+  colRate:    { width: "14%", textAlign: "right", paddingLeft: 4 },
+  colDisc:    { width: "6%",  textAlign: "right" },
+  colTaxable: { width: "14%", textAlign: "right", paddingLeft: 4 },
+  colGst:     { width: "8%",  textAlign: "right" },
+  colTotal:   { width: "16%", textAlign: "right", paddingLeft: 4 },
+  thText: { color: "#fff", fontSize: 7, fontFamily: "Helvetica-Bold" },
+  tdText: { fontSize: 8, color: "#222" },
+  // Totals
+  totalsSection: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
+  totalsBox: { width: 220 },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3 },
+  totalLabel: { fontSize: 8, color: "#555" },
+  totalValue: { fontSize: 8, color: "#222" },
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1.5,
+    borderTopColor: "#1a56db",
+    paddingTop: 5,
+    marginTop: 3,
+  },
+  grandTotalLabel: { fontSize: 10, fontFamily: "Helvetica-Bold" },
+  grandTotalValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#1a56db" },
+  // GST breakdown
+  gstBreakdown: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 4,
+    padding: 8,
+  },
+  gstBreakdownTitle: { fontSize: 7, color: "#888", textTransform: "uppercase", marginBottom: 6, letterSpacing: 0.5 },
+  gstRow: { flexDirection: "row" },
+  gstColHead: { flex: 1, fontSize: 7, fontFamily: "Helvetica-Bold", color: "#555", paddingBottom: 3 },
+  gstColCell: { flex: 1, fontSize: 8, color: "#222" },
+  // Status stamp (diagonal watermark)
+  stampOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    transform: 'rotate(-35deg)',
+  },
+  stampBorderBox: {
+    borderWidth: 5,
+    borderRadius: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    opacity: 0.14,
+  },
+  stampText: { fontSize: 60, fontFamily: 'Helvetica-Bold', letterSpacing: 8 },
+  // Status badge (in header meta)
+  badgePillWrap: { marginTop: 6, alignSelf: 'flex-end' },
+  badgePill: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText: { fontSize: 8, fontFamily: 'Helvetica-Bold', letterSpacing: 0.5 },
+  // Notes / footer
+  notesSection: { marginTop: 20, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 10 },
+  notesLabel: { fontSize: 7, color: "#888", textTransform: "uppercase", marginBottom: 3, letterSpacing: 0.5 },
+  notesText: { fontSize: 8, color: "#444" },
+  footer: { position: "absolute", bottom: 28, left: 40, right: 40, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 6, flexDirection: "row", justifyContent: "space-between" },
+  footerText: { fontSize: 7, color: "#aaa" },
+});
+
+export type InvoicePDFData = {
+  invoice_number: string;
+  invoice_date: string;
+  due_date: string | null;
+  payment_status: string;
+  pdf_status_style?: "stamp" | "badge" | "none" | null;
+  notes: string | null;
+  theme?: InvoiceTheme | null;
+  seller_state_code: string;
+  buyer_state_code: string;
+  is_inter_state: boolean;
+  taxable_amount: number;
+  total_cgst: number;
+  total_sgst: number;
+  total_igst: number;
+  total_gst: number;
+  total_amount: number;
+  seller: {
+    business_name: string;
+    gstin: string | null;
+    address: string | null;
+    city: string | null;
+    state_code: string | null;
+    pincode: string | null;
+    email: string;
+    phone: string | null;
+    pan: string | null;
+    logo_url?: string | null;
+  };
+  client: {
+    name: string;
+    gstin: string | null;
+    address: string;
+    city: string | null;
+    state_code: string;
+    pincode: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  line_items: Array<{
+    sort_order: number;
+    description: string;
+    hsn_sac_code: string;
+    quantity: number;
+    rate: number;
+    discount_percent: number;
+    gst_rate: number;
+    taxable_amount: number;
+    cgst: number;
+    sgst: number;
+    igst: number;
+    total_gst: number;
+    line_total: number;
+  }>;
+};
+
+const STATUS_STYLE: Record<string, { color: string; bg: string; label: string }> = {
+  paid:    { color: '#166534', bg: '#dcfce7', label: 'PAID' },
+  overdue: { color: '#991b1b', bg: '#fee2e2', label: 'OVERDUE' },
+  pending: { color: '#92400e', bg: '#fef3c7', label: 'PENDING' },
+};
+
+function fmtCurrency(n: number) {
+  // ₹ (U+20B9) is not in Helvetica — use "Rs." for reliable PDF rendering
+  return `Rs. ${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function InvoicePDF({ data }: { data: InvoicePDFData }) {
+  const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
+  const t = THEMES[(data.theme as InvoiceTheme) ?? "classic"] ?? THEMES.classic;
+  const effectiveStatusStyle = data.pdf_status_style ?? "stamp";
+  const statusInfo = STATUS_STYLE[data.payment_status] ?? STATUS_STYLE.pending;
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <View style={styles.companyBlock}>
+            {data.seller.logo_url && (
+              <Image style={styles.logoImg} src={data.seller.logo_url} />
+            )}
+            <Text style={styles.companyName}>{data.seller.business_name}</Text>
+            {data.seller.gstin && (
+              <Text style={styles.companyDetail}>GSTIN: {data.seller.gstin}</Text>
+            )}
+            {data.seller.address && (
+              <Text style={styles.companyDetail}>{data.seller.address}</Text>
+            )}
+            {(data.seller.city || data.seller.pincode) && (
+              <Text style={styles.companyDetail}>
+                {[data.seller.city, data.seller.pincode].filter(Boolean).join(" – ")}
+              </Text>
+            )}
+            {data.seller.email && (
+              <Text style={styles.companyDetail}>{data.seller.email}</Text>
+            )}
+            {data.seller.phone && (
+              <Text style={styles.companyDetail}>{data.seller.phone}</Text>
+            )}
+          </View>
+          <View style={styles.invoiceMeta}>
+            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>TAX INVOICE</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Invoice No.</Text>
+              <Text style={styles.metaValue}>{data.invoice_number}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Date</Text>
+              <Text style={styles.metaValue}>{fmtDate(data.invoice_date)}</Text>
+            </View>
+            {data.due_date && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Due Date</Text>
+                <Text style={styles.metaValue}>{fmtDate(data.due_date)}</Text>
+              </View>
+            )}
+            {effectiveStatusStyle === "badge" && (
+              <View style={styles.badgePillWrap}>
+                <View style={[styles.badgePill, { backgroundColor: statusInfo.bg }]}>
+                  <Text style={[styles.badgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Bill To / Seller */}
+        <View style={styles.partiesRow}>
+          <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
+            <Text style={styles.partyName}>{data.seller.business_name}</Text>
+            {data.seller.gstin && <Text style={styles.partyDetail}>GSTIN: {data.seller.gstin}</Text>}
+            {data.seller.pan && <Text style={styles.partyDetail}>PAN: {data.seller.pan}</Text>}
+            <Text style={styles.partyDetail}>State Code: {data.seller_state_code}</Text>
+          </View>
+          <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
+            <Text style={styles.partyName}>{data.client.name}</Text>
+            {data.client.gstin && <Text style={styles.partyDetail}>GSTIN: {data.client.gstin}</Text>}
+            {data.client.address && <Text style={styles.partyDetail}>{data.client.address}</Text>}
+            {(data.client.city || data.client.pincode) && (
+              <Text style={styles.partyDetail}>
+                {[data.client.city, data.client.pincode].filter(Boolean).join(" – ")}
+              </Text>
+            )}
+            {data.client.email && <Text style={styles.partyDetail}>{data.client.email}</Text>}
+            <Text style={styles.partyDetail}>State Code: {data.buyer_state_code}</Text>
+          </View>
+        </View>
+
+        {/* Line Items Table */}
+        <View style={[styles.tableHeader, { backgroundColor: t.tableHeaderBg }]}>
+          <Text style={[styles.thText, styles.colSno, { color: t.tableHeaderColor }]}>#</Text>
+          <Text style={[styles.thText, styles.colDesc, { color: t.tableHeaderColor }]}>Description</Text>
+          <Text style={[styles.thText, styles.colHsn, { color: t.tableHeaderColor }]}>HSN/SAC</Text>
+          <Text style={[styles.thText, styles.colQty, { color: t.tableHeaderColor }]}>Qty</Text>
+          <Text style={[styles.thText, styles.colRate, { color: t.tableHeaderColor }]}>Rate</Text>
+          <Text style={[styles.thText, styles.colDisc, { color: t.tableHeaderColor }]}>Disc%</Text>
+          <Text style={[styles.thText, styles.colTaxable, { color: t.tableHeaderColor }]}>Taxable</Text>
+          <Text style={[styles.thText, styles.colGst, { color: t.tableHeaderColor }]}>GST%</Text>
+          <Text style={[styles.thText, styles.colTotal, { color: t.tableHeaderColor }]}>Total</Text>
+        </View>
+        {lines.map((item, idx) => (
+          <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+            <Text style={[styles.tdText, styles.colSno]}>{idx + 1}</Text>
+            <Text style={[styles.tdText, styles.colDesc]}>{item.description}</Text>
+            <Text style={[styles.tdText, styles.colHsn]}>{item.hsn_sac_code}</Text>
+            <Text style={[styles.tdText, styles.colQty]}>{item.quantity}</Text>
+            <Text style={[styles.tdText, styles.colRate]}>{fmtCurrency(item.rate)}</Text>
+            <Text style={[styles.tdText, styles.colDisc]}>{item.discount_percent}%</Text>
+            <Text style={[styles.tdText, styles.colTaxable]}>{fmtCurrency(item.taxable_amount)}</Text>
+            <Text style={[styles.tdText, styles.colGst]}>{item.gst_rate}%</Text>
+            <Text style={[styles.tdText, styles.colTotal]}>{fmtCurrency(item.line_total)}</Text>
+          </View>
+        ))}
+
+        {/* GST Breakdown */}
+        <View style={styles.gstBreakdown}>
+          <Text style={styles.gstBreakdownTitle}>GST Summary</Text>
+          <View style={styles.gstRow}>
+            <Text style={styles.gstColHead}>Tax Type</Text>
+            <Text style={styles.gstColHead}>Rate</Text>
+            <Text style={styles.gstColHead}>Taxable</Text>
+            <Text style={styles.gstColHead}>Tax Amt</Text>
+          </View>
+          {data.is_inter_state ? (
+            <View style={styles.gstRow}>
+              <Text style={styles.gstColCell}>IGST</Text>
+              <Text style={styles.gstColCell}>—</Text>
+              <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
+              <Text style={styles.gstColCell}>{fmtCurrency(data.total_igst)}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.gstRow}>
+                <Text style={styles.gstColCell}>CGST</Text>
+                <Text style={styles.gstColCell}>—</Text>
+                <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
+                <Text style={styles.gstColCell}>{fmtCurrency(data.total_cgst)}</Text>
+              </View>
+              <View style={styles.gstRow}>
+                <Text style={styles.gstColCell}>SGST</Text>
+                <Text style={styles.gstColCell}>—</Text>
+                <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
+                <Text style={styles.gstColCell}>{fmtCurrency(data.total_sgst)}</Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Totals */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalsBox}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Taxable Amount</Text>
+              <Text style={styles.totalValue}>{fmtCurrency(data.taxable_amount)}</Text>
+            </View>
+            {data.is_inter_state ? (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>IGST</Text>
+                <Text style={styles.totalValue}>{fmtCurrency(data.total_igst)}</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>CGST</Text>
+                  <Text style={styles.totalValue}>{fmtCurrency(data.total_cgst)}</Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>SGST</Text>
+                  <Text style={styles.totalValue}>{fmtCurrency(data.total_sgst)}</Text>
+                </View>
+              </>
+            )}
+            <View style={[styles.grandTotalRow, { borderTopColor: t.dividerColor }]}>
+              <Text style={styles.grandTotalLabel}>Total</Text>
+              <Text style={[styles.grandTotalValue, { color: t.grandTotalColor }]}>{fmtCurrency(data.total_amount)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Notes */}
+        {data.notes && (
+          <View style={styles.notesSection}>
+            <Text style={styles.notesLabel}>Notes</Text>
+            <Text style={styles.notesText}>{data.notes}</Text>
+          </View>
+        )}
+
+        {/* Footer */}
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>Invoice #{data.invoice_number}</Text>
+          <Text style={styles.footerText}>This is a computer-generated invoice</Text>
+        </View>
+
+        {/* Diagonal stamp overlay */}
+        {effectiveStatusStyle === "stamp" && (
+          <View style={styles.stampOverlay}>
+            <View style={[styles.stampBorderBox, { borderColor: statusInfo.color }]}>
+              <Text style={[styles.stampText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+            </View>
+          </View>
+        )}
+      </Page>
+    </Document>
+  );
+}
