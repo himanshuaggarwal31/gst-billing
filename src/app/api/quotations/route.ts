@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
   if (!client) return NextResponse.json(apiError("Client not found", "NOT_FOUND"), { status: 404 });
 
   // Compute totals
-  const totals = calculateInvoiceTotals(
+  const { lines: lineCalc, summary } = calculateInvoiceTotals(
     line_items.map((li) => ({
       description: li.description,
       hsnSacCode: li.hsn_sac_code,
@@ -99,12 +99,12 @@ export async function POST(req: NextRequest) {
       seller_state_code,
       notes: notes || null,
       theme,
-      taxable_amount: totals.summary.taxableAmount,
-      total_cgst: totals.summary.totalCgst,
-      total_sgst: totals.summary.totalSgst,
-      total_igst: totals.summary.totalIgst,
-      total_gst: totals.summary.totalGst,
-      total_amount: totals.summary.totalAmount,
+      taxable_amount: summary.taxableAmount,
+      total_cgst: summary.totalCgst,
+      total_sgst: summary.totalSgst,
+      total_igst: summary.totalIgst,
+      total_gst: summary.totalGst,
+      total_amount: summary.totalAmount,
       status: "draft",
       created_by_email: actorEmail,
     })
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Insert line items
-  const lineRows = totals.items.map((item, i) => ({
+  const lineRows = lineCalc.map((item, i) => ({
     quotation_id: quote.id,
     description: line_items[i].description,
     hsn_sac_code: line_items[i].hsn_sac_code,
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     discount_percent: line_items[i].discount_percent,
     taxable_amount: item.taxableAmount,
     gst_amount: item.cgst + item.sgst + item.igst,
-    total_amount: item.totalAmount,
+    total_amount: item.lineTotal,
     sort_order: i,
   }));
 
