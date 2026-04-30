@@ -51,11 +51,11 @@
 
 ## 🟠 Medium Priority — Business Operations
 
-- [ ] #22 Proforma invoice / Quotation — create a quote, convert to invoice in one click
+- [x] #22 Proforma invoice / Quotation — create a quote, convert to invoice in one click
 - [ ] #23 Debit notes — upward revision complement to credit notes
 - [ ] #24 Purchase bills recording — log supplier invoices separately for ITC matching and audit
-- [ ] #25 Client statement of accounts — full transaction history per client (invoices, payments, credits)
-- [ ] #26 Aging report — 0–30 / 31–60 / 61–90+ days overdue dashboard for collections
+- [x] #25 Client statement of accounts — full transaction history per client (invoices, payments, credits)
+- [x] #26 Aging report — 0–30 / 31–60 / 61–90+ days overdue dashboard for collections
 - [ ] #27 Delivery challan — goods dispatch document issued before or without an invoice
 - [ ] #28 Invoice approval workflow — Draft → Review → Approved → Sent status chain
 

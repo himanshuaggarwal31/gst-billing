@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Invoices", href: "/dashboard/invoices" },
+  { label: "Quotations", href: "/dashboard/quotations" },
   { label: "Clients", href: "/dashboard/clients" },
   { label: "Products", href: "/dashboard/products" },
   { label: "Expenses", href: "/dashboard/expenses" },
   { label: "Recurring", href: "/dashboard/recurring" },
   { label: "Credit Notes", href: "/dashboard/credit-notes" },
   { label: "GST Reports", href: "/dashboard/gst-reports" },
+  { label: "Aging", href: "/dashboard/reports/aging" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Settings", href: "/dashboard/settings" },
 ];
