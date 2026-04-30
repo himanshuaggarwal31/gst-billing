@@ -7,10 +7,13 @@ import { resolveOwnerId } from "@/lib/resolve-owner";
 const ProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
+  sku: z.string().optional().nullable(),
   hsn_sac_code: z.string().min(4, "HSN/SAC code must be at least 4 digits"),
   is_service: z.boolean().default(false),
   default_rate: z.number().min(0, "Rate must be positive"),
+  purchase_rate: z.number().min(0).optional().nullable(),
   default_gst_rate: z.number().min(0).max(28),
+  cess_rate: z.number().min(0).max(100).default(0),
   unit: z.string().min(1).default("Nos"),
 });
 
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
   const parsed = ProductSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"),
+      apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"),
       { status: 400 }
     );
   }
