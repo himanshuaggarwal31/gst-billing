@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { calculateInvoiceTotals } from "@/lib/gst";
 import { resolveOwnerId } from "@/lib/resolve-owner";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 const LineItemSchema = z.object({
   description: z.string().min(1),
@@ -46,7 +47,7 @@ export async function GET() {
   return NextResponse.json(apiSuccess(data));
 }
 
-const FREE_PLAN_INVOICE_LIMIT = 5;
+const FREE_PLAN_INVOICE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
   const parsed = InvoiceSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"),
+      apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"),
       { status: 400 }
     );
   }

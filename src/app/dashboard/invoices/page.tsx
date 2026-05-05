@@ -46,7 +46,8 @@ function fmt(n: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n);
 }
 
-const FREE_LIMIT = 5;
+import { PLAN_CONFIG } from "@/lib/plan-config";
+const FREE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
 
 export default function InvoicesPage() {
   const router = useRouter();

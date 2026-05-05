@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -32,7 +33,7 @@ export default async function DashboardPage() {
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-  const FREE_LIMIT = 5;
+  const FREE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
   const isNearLimit =
     profile?.plan === "free" && (profile?.invoice_count_this_month ?? 0) >= FREE_LIMIT - 1;
 
