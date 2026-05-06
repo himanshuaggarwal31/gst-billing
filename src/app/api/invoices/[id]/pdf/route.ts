@@ -15,8 +15,8 @@ export async function GET(
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
   const { ownerId } = await resolveOwnerId(supabase, user.id, user.email!);
 
-  // Fetch invoice with client and line items, plus eway_bill in parallel
-  const [{ data: invoice, error: invErr }, { data: ewb }, { data: profile }] = await Promise.all([
+  // Fetch invoice with client and line items, plus eway_bill and e_invoice in parallel
+  const [{ data: invoice, error: invErr }, { data: ewb }, { data: profile }, { data: einvoice }] = await Promise.all([
     supabase
       .from("invoices")
       .select(`*, clients(*), invoice_line_items(*)`)
@@ -34,9 +34,22 @@ export async function GET(
       .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
       .eq("id", ownerId)
       .single(),
+    supabase
+      .from("e_invoices")
+      .select("irn, ack_no, ack_date, signed_qr, status")
+      .eq("invoice_id", id)
+      .eq("user_id", ownerId)
+      .maybeSingle(),
   ]);
 
   if (invErr || !invoice) return new NextResponse("Not found", { status: 404 });
+
+  // Generate QR code data URL server-side if e-invoice has a signed QR
+  let eInvoiceQrDataUrl: string | null = null;
+  if (einvoice?.status === "generated" && einvoice.signed_qr) {
+    const QRCode = await import("qrcode");
+    eInvoiceQrDataUrl = await QRCode.toDataURL(einvoice.signed_qr, { width: 128, margin: 1 });
+  }
 
   const pdfData = {
     invoice_number: invoice.invoice_number,
@@ -57,6 +70,14 @@ export async function GET(
     total_amount: invoice.total_amount,
     eway_bill_number: ewb?.eway_bill_number ?? null,
     eway_bill_valid_until: ewb?.valid_until ?? null,
+    e_invoice: (einvoice?.status === "generated" && einvoice.irn)
+      ? {
+          irn:         einvoice.irn,
+          ack_no:      einvoice.ack_no ?? null,
+          ack_date:    einvoice.ack_date ?? null,
+          qr_data_url: eInvoiceQrDataUrl,
+        }
+      : null,
     seller: {
       business_name: profile?.business_name || "My Business",
       gstin: profile?.gstin ?? null,

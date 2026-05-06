@@ -65,10 +65,10 @@ One-click CSV export of all invoices in GSTR-1 compatible format (B2B and B2C se
 Download a ready-to-file GSTR-3B summary CSV for any month — outward supplies, ITC from expenses, and net GST payable — in one click. Covers Table 3.1 (output tax) and Table 4A (ITC). Works alongside GSTR-1 for complete monthly return filing.
 
 ### 🔖 e-Invoice (IRN + QR Code)
-Generate the NIC-format JSON for any invoice and upload it to the IRP portal (einvoice1.gst.gov.in) to get your Invoice Reference Number (IRN). Paste the IRN, Ack No, and Signed QR Code back into the app — the QR code is stored against the invoice for compliance records. Mandatory for businesses with annual turnover > ₹5 Cr; available to all businesses for voluntary use.
+Generate the NIC-format JSON for any invoice and upload it to the IRP portal (einvoice1.gst.gov.in) to get your Invoice Reference Number (IRN). Paste the IRN, Ack No, and Signed QR Code back into the app — the QR code is stored against the invoice and automatically printed on the PDF invoice (mandatory for e-invoice businesses). Compliant with CBIC requirements for businesses with annual turnover > ₹5 Cr; available to all businesses for voluntary use.
 
 ### 🚚 e-Way Bill
-Generate the NIC-format JSON for any goods invoice and upload it to ewaybillgst.gov.in to get an e-Way Bill number. Fill in transport details (mode, vehicle number, transporter GSTIN) before downloading. Record the 12-digit e-Way Bill number and validity date once the portal confirms. Required for goods movement exceeding ₹50,000 in value.
+Generate the NIC-format JSON for any goods invoice and upload it to ewaybillgst.gov.in to get an e-Way Bill number. Fill in transport details (mode, vehicle number, transporter GSTIN) before downloading. Record the 12-digit e-Way Bill number and validity date once the portal confirms — then print the separate **e-Way Bill transport document** that the driver carries during transit. Required for goods movement exceeding ₹50,000 in value.
 
 ### 🧮 ITC Ledger (Input Tax Credit)
 See exactly how much GST you can claim back from your business expenses each month. The ITC Ledger shows GST collected on invoices, GST paid on purchases, and your net monthly liability — so you never overpay.

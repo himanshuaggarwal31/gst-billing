@@ -169,6 +169,23 @@ const styles = StyleSheet.create({
   notesSection: { marginTop: 20, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 10 },
   notesLabel: { fontSize: 7, color: "#888", textTransform: "uppercase", marginBottom: 3, letterSpacing: 0.5 },
   notesText: { fontSize: 8, color: "#444" },
+  // e-Invoice section
+  eInvoiceSection: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 4,
+    padding: 8,
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "flex-start" as const,
+  },
+  eInvoiceLeft: { flex: 1, paddingRight: 8 },
+  eInvoiceSectionTitle: { fontSize: 7, color: "#888", textTransform: "uppercase" as const, marginBottom: 5, letterSpacing: 0.5 },
+  eInvoiceRow: { flexDirection: "row" as const, marginBottom: 3 },
+  eInvoiceLabel: { fontSize: 6.5, color: "#888", width: 48 },
+  eInvoiceValue: { fontSize: 6.5, fontFamily: "Helvetica-Bold", flex: 1 },
+  eInvoiceQr: { width: 72, height: 72 },
   footer: { position: "absolute", bottom: 28, left: 40, right: 40, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 6, flexDirection: "row", justifyContent: "space-between" },
   footerText: { fontSize: 7, color: "#aaa" },
 });
@@ -192,6 +209,12 @@ export type InvoicePDFData = {
   total_amount: number;
   eway_bill_number?: string | null;
   eway_bill_valid_until?: string | null;
+  e_invoice?: {
+    irn: string;
+    ack_no: string | null;
+    ack_date: string | null;
+    qr_data_url: string | null;
+  } | null;
   seller: {
     business_name: string;
     gstin: string | null;
@@ -438,6 +461,34 @@ export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel 
           <View style={styles.notesSection}>
             <Text style={styles.notesLabel}>Notes</Text>
             <Text style={styles.notesText}>{data.notes}</Text>
+          </View>
+        )}
+
+        {/* e-Invoice details (IRN / ACK / QR) — mandatory when IRN is generated */}
+        {data.e_invoice?.irn && (
+          <View style={styles.eInvoiceSection}>
+            <View style={styles.eInvoiceLeft}>
+              <Text style={styles.eInvoiceSectionTitle}>e-Invoice Details (IRP Verified)</Text>
+              <View style={styles.eInvoiceRow}>
+                <Text style={styles.eInvoiceLabel}>IRN</Text>
+                <Text style={styles.eInvoiceValue}>{data.e_invoice.irn}</Text>
+              </View>
+              {data.e_invoice.ack_no && (
+                <View style={styles.eInvoiceRow}>
+                  <Text style={styles.eInvoiceLabel}>Ack. No.</Text>
+                  <Text style={styles.eInvoiceValue}>{data.e_invoice.ack_no}</Text>
+                </View>
+              )}
+              {data.e_invoice.ack_date && (
+                <View style={styles.eInvoiceRow}>
+                  <Text style={styles.eInvoiceLabel}>Ack. Date</Text>
+                  <Text style={styles.eInvoiceValue}>{fmtDate(data.e_invoice.ack_date)}</Text>
+                </View>
+              )}
+            </View>
+            {data.e_invoice.qr_data_url && (
+              <Image style={styles.eInvoiceQr} src={data.e_invoice.qr_data_url} />
+            )}
           </View>
         )}
 

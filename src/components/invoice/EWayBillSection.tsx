@@ -289,9 +289,20 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
             </div>
           </div>
           {(ewb.eway_bill_number || ewb.valid_until) && (
-            <Button size="sm" variant="outline" onClick={handleSave} disabled={saving} className="mt-3">
-              {saving ? "Saving…" : "Save Bill Number"}
-            </Button>
+            <div className="flex gap-3 mt-3">
+              <Button size="sm" variant="outline" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving…" : "Save Bill Number"}
+              </Button>
+              {ewb.eway_bill_number && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => window.open(`/api/invoices/${invoiceId}/eway-bill/pdf`, "_blank")}
+                >
+                  🖨 Print e-Way Bill
+                </Button>
+              )}
+            </div>
           )}
         </div>
 

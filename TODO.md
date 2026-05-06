@@ -41,8 +41,8 @@
 ## 🔴 High Priority — GST Compliance (India-specific)
 
 - [x] #16 GSTR-3B export — monthly summary return (CSV/JSON) for GST portal filing
-- [x] #17 E-invoice (IRN + QR code) — generate NIC JSON for IRP portal; record IRN/ACK/QR; render QR code on invoice detail
-- [x] #18 E-way bill generation — NIC JSON export for ewaybillgst.gov.in; transport details form; record bill number after portal upload
+- [x] #17 E-invoice (IRN + QR code) — generate NIC JSON for IRP portal; record IRN/ACK/QR; IRN/ACK/QR printed on invoice PDF (legally mandatory when generated)
+- [x] #18 E-way bill generation — NIC JSON export for ewaybillgst.gov.in; transport details form; record bill number; separate printable EWB transport PDF
 - [ ] #19 GSTR-2A/2B reconciliation — match your purchase invoices vs supplier-filed data; required for ITC
 - [x] #20 ITC (Input Tax Credit) ledger — running balance of GST claimable from purchase bills
 - [x] #21 HSN/SAC code master — full code list with GST rate mapping, autocomplete on invoice line items
