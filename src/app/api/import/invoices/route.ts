@@ -3,6 +3,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { resolveOwnerId } from "@/lib/resolve-owner";
 
+// Fallback state code used when seller/buyer state is missing from the CSV.
+// Overridden at runtime by the owner's registered profile state_code.
+const FALLBACK_STATE_CODE = "27"; // Maharashtra
+
 function parseCsv(text: string): string[][] {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
   return lines.filter((l) => l.trim() !== "").map((line) => {
@@ -98,8 +102,8 @@ export async function POST(req: NextRequest) {
     .select("state_code")
     .eq("id", ownerId)
     .single();
-  // Default to owner's registered state; falls back to "27" (Maharashtra) if unset
-  const defaultStateCode = ownerProfile?.state_code || "27";
+  // Default to owner's registered state; falls back to FALLBACK_STATE_CODE if unset
+  const defaultStateCode = ownerProfile?.state_code || FALLBACK_STATE_CODE;
 
   // Group rows by invoice_number (multiple rows = multiple line items)
   const invoiceMap = new Map<string, {

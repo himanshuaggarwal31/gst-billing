@@ -82,10 +82,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const toInsert = rows.slice(1).map((row) => {
+  const skippedErrors: string[] = [];
+  const toInsert = rows.slice(1).map((row, idx) => {
+    const rowNum = idx + 2; // +2 = 1-based + skip header
     const stateCode = (row[stateCodeIdx] || "").trim();
     // Accept 1-2 digit state codes only (e.g. "9", "09", "27")
-    if (!/^\d{1,2}$/.test(stateCode)) return null;
+    if (!/^\d{1,2}$/.test(stateCode)) {
+      const name = row[nameIdx] || `row ${rowNum}`;
+      skippedErrors.push(`Row ${rowNum} (${name}): invalid state_code "${stateCode}" — must be a 1-2 digit GST state code`);
+      return null;
+    }
+    if (!row[nameIdx]?.trim()) {
+      skippedErrors.push(`Row ${rowNum}: missing required field 'name'`);
+      return null;
+    }
     return {
       user_id:    ownerId,
       name:       row[nameIdx] || "",
@@ -98,10 +108,13 @@ export async function POST(req: NextRequest) {
       state_code: stateCode.padStart(2, "0"),
       pincode:    row[pincodeIdx]   !== undefined ? row[pincodeIdx]?.replace(/\D/g, "").slice(0, 6) || null : null,
     };
-  }).filter((r): r is NonNullable<typeof r> => r !== null && !!r.name);
+  }).filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (toInsert.length === 0) {
-    return NextResponse.json(apiError("No valid rows found in CSV (name and state_code are required)", "VALIDATION_ERROR"), { status: 400 });
+    return NextResponse.json(
+      apiError("No valid rows found in CSV (name and state_code are required)", "VALIDATION_ERROR"),
+      { status: 400 }
+    );
   }
 
   const { data, error } = await supabase
@@ -111,5 +124,5 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json(apiError(error.message, "INTERNAL_ERROR"), { status: 500 });
 
-  return NextResponse.json(apiSuccess({ imported: data?.length ?? 0, rows: data }));
+  return NextResponse.json(apiSuccess({ imported: data?.length ?? 0, rows: data, errors: skippedErrors }));
 }

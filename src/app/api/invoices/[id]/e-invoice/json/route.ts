@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveOwnerId } from "@/lib/resolve-owner";
 
+// IRP-mandated placeholder pincode for addresses where pincode is missing/unknown
+const PLACEHOLDER_PINCODE = 999999;
+
 function nicDate(dateStr: string): string {
   // NIC IRP portal expects DD/MM/YYYY
   const d = new Date(dateStr);
@@ -107,8 +110,8 @@ export async function GET(
       Addr1: (profile?.address || "").slice(0, 100),
       Addr2: "",
       Loc:   profile?.city || "",
-      // IRP requires a valid 6-digit pincode; 999999 is the placeholder for missing/unknown
-      Pin:   parseInt(profile?.pincode ?? "", 10) || 999999,
+      // IRP requires a valid 6-digit pincode; PLACEHOLDER_PINCODE is the placeholder for missing/unknown
+      Pin:   parseInt(profile?.pincode ?? "", 10) || PLACEHOLDER_PINCODE,
       Stcd:  sellerStateCode,
       Ph:    (profile?.phone || "").replace(/\D/g, "").slice(0, 10),
       Em:    (profile?.business_email || "").slice(0, 100),
@@ -121,8 +124,8 @@ export async function GET(
       Addr1: (client.address || "").slice(0, 100),
       Addr2: "",
       Loc:   client.city || "",
-      // IRP requires a valid 6-digit pincode; 999999 is the placeholder for missing/unknown
-      Pin:   parseInt(client.pincode ?? "", 10) || 999999,
+      // IRP requires a valid 6-digit pincode; PLACEHOLDER_PINCODE is the placeholder for missing/unknown
+      Pin:   parseInt(client.pincode ?? "", 10) || PLACEHOLDER_PINCODE,
       Stcd:  buyerStateCode,
       Ph:    (client.phone || "").replace(/\D/g, "").slice(0, 10),
       Em:    (client.email || "").slice(0, 100),
