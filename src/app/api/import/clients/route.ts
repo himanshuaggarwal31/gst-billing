@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
 
   const toInsert = rows.slice(1).map((row) => {
     const stateCode = (row[stateCodeIdx] || "").trim();
+    // Accept 1-2 digit state codes only (e.g. "9", "09", "27")
+    if (!/^\d{1,2}$/.test(stateCode)) return null;
     return {
       user_id:    ownerId,
       name:       row[nameIdx] || "",
@@ -93,10 +95,10 @@ export async function POST(req: NextRequest) {
       address:    row[addressIdx]   !== undefined ? row[addressIdx]                  || "" : "",
       city:       row[cityIdx]      !== undefined ? row[cityIdx]                     || null : null,
       // Pad single-digit state codes (e.g. "9" → "09") as required by GST portal
-      state_code: stateCode ? stateCode.padStart(2, "0").slice(0, 2) : null,
+      state_code: stateCode.padStart(2, "0"),
       pincode:    row[pincodeIdx]   !== undefined ? row[pincodeIdx]?.replace(/\D/g, "").slice(0, 6) || null : null,
     };
-  }).filter((r) => r.name && r.state_code);
+  }).filter((r): r is NonNullable<typeof r> => r !== null && !!r.name);
 
   if (toInsert.length === 0) {
     return NextResponse.json(apiError("No valid rows found in CSV (name and state_code are required)", "VALIDATION_ERROR"), { status: 400 });

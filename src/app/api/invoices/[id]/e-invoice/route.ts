@@ -4,14 +4,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { resolveOwnerId } from "@/lib/resolve-owner";
 
+// Validates YYYY-MM-DD format with basic month/day range checks
+const isoDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
 const EInvoiceSchema = z.object({
   irn:             z.string().min(1).max(64).optional().nullable(),
   ack_no:          z.string().optional().nullable(),
-  ack_date:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  ack_date:        z.string().regex(isoDateRegex).optional().nullable(),
   signed_qr:       z.string().optional().nullable(),
   status:          z.enum(["pending", "generated", "cancelled"]).default("pending"),
   cancel_irn_hash: z.string().optional().nullable(),
-  cancel_date:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  cancel_date:     z.string().regex(isoDateRegex).optional().nullable(),
   cancel_remark:   z.string().optional().nullable(),
 });
 

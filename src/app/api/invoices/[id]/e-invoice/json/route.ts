@@ -107,7 +107,8 @@ export async function GET(
       Addr1: (profile?.address || "").slice(0, 100),
       Addr2: "",
       Loc:   profile?.city || "",
-      Pin:   parseInt(profile?.pincode ?? "0", 10) || 0,
+      // IRP requires a valid 6-digit pincode; 999999 is the placeholder for missing/unknown
+      Pin:   parseInt(profile?.pincode ?? "", 10) || 999999,
       Stcd:  sellerStateCode,
       Ph:    (profile?.phone || "").replace(/\D/g, "").slice(0, 10),
       Em:    (profile?.business_email || "").slice(0, 100),
@@ -120,7 +121,8 @@ export async function GET(
       Addr1: (client.address || "").slice(0, 100),
       Addr2: "",
       Loc:   client.city || "",
-      Pin:   parseInt(client.pincode ?? "0", 10) || 0,
+      // IRP requires a valid 6-digit pincode; 999999 is the placeholder for missing/unknown
+      Pin:   parseInt(client.pincode ?? "", 10) || 999999,
       Stcd:  buyerStateCode,
       Ph:    (client.phone || "").replace(/\D/g, "").slice(0, 10),
       Em:    (client.email || "").slice(0, 100),

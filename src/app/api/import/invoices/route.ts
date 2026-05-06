@@ -123,14 +123,20 @@ export async function POST(req: NextRequest) {
     if (!invNum) continue;
 
     if (!invoiceMap.has(invNum)) {
+      // Normalise state codes: accept 1-2 digits, reject longer strings to avoid silent truncation
+      const rawSeller = sellerStateIdx !== -1 ? (row[sellerStateIdx] || "").trim() : "";
+      const rawBuyer  = buyerStateIdx  !== -1 ? (row[buyerStateIdx]  || "").trim() : "";
+      const sellerSC = /^\d{1,2}$/.test(rawSeller) ? rawSeller.padStart(2, "0") : defaultStateCode;
+      const buyerSC  = /^\d{1,2}$/.test(rawBuyer)  ? rawBuyer.padStart(2, "0")  : defaultStateCode;
+
       invoiceMap.set(invNum, {
         invoice_number:    invNum,
         invoice_date:      row[invDateIdx] || new Date().toISOString().slice(0, 10),
         due_date:          dueDateIdx !== -1 ? row[dueDateIdx] || null : null,
         client_name:       row[clientNameIdx] || "",
         client_gstin:      clientGstinIdx !== -1 ? row[clientGstinIdx]?.toUpperCase() || null : null,
-        seller_state_code: sellerStateIdx !== -1 ? (row[sellerStateIdx] || "").padStart(2, "0").slice(0, 2) : defaultStateCode,
-        buyer_state_code:  buyerStateIdx !== -1 ? (row[buyerStateIdx] || "").padStart(2, "0").slice(0, 2) : defaultStateCode,
+        seller_state_code: sellerSC,
+        buyer_state_code:  buyerSC,
         payment_status:    statusIdx !== -1 ? (["paid", "pending", "partial"].includes(row[statusIdx]) ? row[statusIdx] : "pending") : "pending",
         notes:             notesIdx !== -1 ? row[notesIdx] || null : null,
         lines:             [],
@@ -175,6 +181,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Find the invoice to get gstin/state_code
       const inv = [...invoiceMap.values()].find((i) => i.client_name === clientName);
+      const rawSC = inv?.buyer_state_code || defaultStateCode;
       const { data: newClient } = await supabase
         .from("clients")
         .insert({
@@ -182,7 +189,8 @@ export async function POST(req: NextRequest) {
           name:       clientName,
           gstin:      inv?.client_gstin || null,
           address:    "",
-          state_code: (inv?.buyer_state_code || defaultStateCode).padStart(2, "0").slice(0, 2),
+          // Use validated 2-digit state code from invoice row or owner default
+          state_code: /^\d{1,2}$/.test(rawSC) ? rawSC.padStart(2, "0") : defaultStateCode,
         })
         .select("id")
         .single();
