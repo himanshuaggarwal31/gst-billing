@@ -579,7 +579,7 @@ export default function SettingsPage() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Overrides the theme&apos;s default colour for header, title, and totals. Leave unset to use the theme default.
+              Overrides the theme's default colour for header, title, and totals. Leave unset to use the theme default.
             </p>
           </div>
 

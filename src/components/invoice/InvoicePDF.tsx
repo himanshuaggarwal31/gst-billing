@@ -545,7 +545,7 @@ function InvoicePage({
       {/* Terms & Conditions */}
       {data.terms && (
         <View style={styles.termsSection}>
-          <Text style={styles.notesLabel}>Terms &amp; Conditions</Text>
+          <Text style={styles.notesLabel}>Terms & Conditions</Text>
           <Text style={styles.notesText}>{data.terms}</Text>
         </View>
       )}
