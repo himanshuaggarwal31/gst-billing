@@ -44,7 +44,8 @@ export async function GET(
     .select(`
       *,
       clients(*),
-      invoice_line_items(*)
+      invoice_line_items(*),
+      eway_bills(*)
     `)
     .eq("id", id)
     .eq("user_id", ownerId)

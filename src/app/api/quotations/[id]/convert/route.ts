@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { resolveOwnerId } from "@/lib/resolve-owner";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 /**
  * POST /api/quotations/[id]/convert
@@ -24,6 +25,26 @@ export async function POST(
 
   if (isDelegate && role === "viewer") {
     return NextResponse.json(apiError("Viewers cannot convert quotations", "FORBIDDEN"), { status: 403 });
+  }
+
+  // Check free plan limit with lazy monthly reset
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan, invoice_count_this_month, invoice_count_reset_month")
+    .eq("id", ownerId)
+    .single();
+
+  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const effectiveCount =
+    profile?.invoice_count_reset_month === currentMonth
+      ? (profile?.invoice_count_this_month ?? 0)
+      : 0;
+
+  if (profile?.plan === "free" && effectiveCount >= PLAN_CONFIG.free.invoicesPerMonth) {
+    return NextResponse.json(
+      apiError("Free plan limit reached. Upgrade to create more invoices.", "LIMIT_REACHED"),
+      { status: 403 }
+    );
   }
 
   // Load quotation with line items and client state
@@ -137,18 +158,11 @@ export async function POST(
     .update({ status: "converted", converted_invoice_id: invoice.id, updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  // Increment invoice counter on the profile
-  const { data: profile } = await supabase
+  // Increment invoice counter (with lazy monthly reset)
+  await supabase
     .from("profiles")
-    .select("invoice_count_this_month")
-    .eq("id", ownerId)
-    .single();
-  if (profile) {
-    await supabase
-      .from("profiles")
-      .update({ invoice_count_this_month: (profile.invoice_count_this_month ?? 0) + 1 })
-      .eq("id", ownerId);
-  }
+    .update({ invoice_count_this_month: effectiveCount + 1, invoice_count_reset_month: currentMonth })
+    .eq("id", ownerId);
 
   return NextResponse.json(apiSuccess({ invoice_id: invoice.id, invoice_number: nextNumber }), { status: 201 });
 }

@@ -63,11 +63,18 @@ export async function POST(req: NextRequest) {
   // Enforce free plan limit against the owner's quota
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, invoice_count_this_month")
+    .select("plan, invoice_count_this_month, invoice_count_reset_month")
     .eq("id", ownerId)
     .single();
 
-  if (profile?.plan === "free" && (profile?.invoice_count_this_month ?? 0) >= FREE_PLAN_INVOICE_LIMIT) {
+  // Lazy monthly reset: if stored month differs from current month, treat count as 0
+  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const effectiveCount =
+    profile?.invoice_count_reset_month === currentMonth
+      ? (profile?.invoice_count_this_month ?? 0)
+      : 0;
+
+  if (profile?.plan === "free" && effectiveCount >= FREE_PLAN_INVOICE_LIMIT) {
     return NextResponse.json(
       apiError("Free plan limit reached. Upgrade to create more invoices.", "LIMIT_REACHED"),
       { status: 403 }
@@ -168,10 +175,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(apiError(lineErr.message, "INTERNAL_ERROR"), { status: 500 });
   }
 
-  // Increment monthly invoice counter on the owner's profile
+  // Increment monthly invoice counter (resets automatically when month changes)
   await supabase
     .from("profiles")
-    .update({ invoice_count_this_month: (profile?.invoice_count_this_month ?? 0) + 1 })
+    .update({ invoice_count_this_month: effectiveCount + 1, invoice_count_reset_month: currentMonth })
     .eq("id", ownerId);
 
   return NextResponse.json(apiSuccess(invoice), { status: 201 });

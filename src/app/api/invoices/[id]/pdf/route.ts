@@ -15,22 +15,28 @@ export async function GET(
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
   const { ownerId } = await resolveOwnerId(supabase, user.id, user.email!);
 
-  // Fetch invoice with client and line items
-  const { data: invoice, error: invErr } = await supabase
-    .from("invoices")
-    .select(`*, clients(*), invoice_line_items(*)`)
-    .eq("id", id)
-    .eq("user_id", ownerId)
-    .single();
+  // Fetch invoice with client and line items, plus eway_bill in parallel
+  const [{ data: invoice, error: invErr }, { data: ewb }, { data: profile }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select(`*, clients(*), invoice_line_items(*)`)
+      .eq("id", id)
+      .eq("user_id", ownerId)
+      .single(),
+    supabase
+      .from("eway_bills")
+      .select("eway_bill_number, valid_until")
+      .eq("invoice_id", id)
+      .eq("user_id", ownerId)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
+      .eq("id", ownerId)
+      .single(),
+  ]);
 
   if (invErr || !invoice) return new NextResponse("Not found", { status: 404 });
-
-  // Fetch seller profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
-    .eq("id", ownerId)
-    .single();
 
   const pdfData = {
     invoice_number: invoice.invoice_number,
@@ -49,6 +55,8 @@ export async function GET(
     total_igst: invoice.total_igst,
     total_gst: invoice.total_gst,
     total_amount: invoice.total_amount,
+    eway_bill_number: ewb?.eway_bill_number ?? null,
+    eway_bill_valid_until: ewb?.valid_until ?? null,
     seller: {
       business_name: profile?.business_name || "My Business",
       gstin: profile?.gstin ?? null,

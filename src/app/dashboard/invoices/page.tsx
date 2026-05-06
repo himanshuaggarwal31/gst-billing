@@ -313,9 +313,10 @@ export default function InvoicesPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono font-semibold text-gray-900 text-sm">
+                    <Link href={`/dashboard/invoices/${invoice.id}`}
+                      className="font-mono font-semibold text-gray-900 text-sm hover:underline hover:text-blue-700">
                       {invoice.invoice_number}
-                    </span>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <span className="font-medium text-gray-800 text-sm">{invoice.clients?.name ?? "—"}</span>

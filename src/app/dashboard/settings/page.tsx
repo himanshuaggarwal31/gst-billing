@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
 import { Badge } from "@/components/ui/badge";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 type Profile = {
   business_name: string;
@@ -399,7 +400,7 @@ export default function SettingsPage() {
             <p className="font-medium capitalize">{profile?.plan ?? "free"}</p>
             {profile?.plan === "free" && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                {profile.invoice_count_this_month}/5 invoices used this month
+                {profile.invoice_count_this_month}/{PLAN_CONFIG.free.invoicesPerMonth} invoices used this month
               </p>
             )}
           </div>
