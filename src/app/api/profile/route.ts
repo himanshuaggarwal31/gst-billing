@@ -19,6 +19,9 @@ const ProfileSchema = z.object({
   pdf_theme: z.enum(["classic", "minimal", "modern"]).optional().nullable(),
   pdf_accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex colour").optional().nullable().or(z.literal("")),
   pdf_footer_text: z.string().optional().nullable(),
+  pdf_footer_text_invoice: z.string().optional().nullable(),
+  pdf_footer_text_quotation: z.string().optional().nullable(),
+  pdf_footer_text_ewb: z.string().optional().nullable(),
   pdf_terms: z.string().optional().nullable(),
   pdf_show_amount_in_words: z.boolean().optional().nullable(),
   pdf_print_copies: z.boolean().optional().nullable(),
@@ -31,7 +34,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
+    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_footer_text_invoice, pdf_footer_text_quotation, pdf_footer_text_ewb, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
     .eq("id", user.id)
     .single();
 

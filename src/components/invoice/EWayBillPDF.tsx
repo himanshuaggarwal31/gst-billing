@@ -60,17 +60,19 @@ const styles = StyleSheet.create({
   partyLabel: { fontSize: 7, color: "#9ca3af", textTransform: "uppercase", marginBottom: 3, letterSpacing: 0.5 },
   partyName: { fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 2 },
   partyDetail: { fontSize: 8, color: "#374151", marginBottom: 1.5 },
-  // Transport details
-  transportGrid: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  transportCell: {
+  // Transport details — unified box
+  transportBox: {
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    borderRadius: 3,
-    padding: "4 6",
-    minWidth: "22%",
+    borderRadius: 4,
+    padding: 8,
+    backgroundColor: "#f9fafb",
   },
-  transportLabel: { fontSize: 6.5, color: "#9ca3af", marginBottom: 2 },
-  transportValue: { fontSize: 8, fontFamily: "Helvetica-Bold" },
+  transportBoxLabel: { fontSize: 7, color: "#9ca3af", textTransform: "uppercase", marginBottom: 6, letterSpacing: 0.5 },
+  transportRow: { flexDirection: "row", marginBottom: 4 },
+  transportField: { flex: 1 },
+  transportFieldLabel: { fontSize: 6.5, color: "#9ca3af", marginBottom: 1.5 },
+  transportFieldValue: { fontSize: 8, fontFamily: "Helvetica-Bold" },
   // Table — header background applied dynamically
   tableHeader: {
     flexDirection: "row",
@@ -84,13 +86,13 @@ const styles = StyleSheet.create({
     padding: "4 6",
   },
   tableRowAlt: { backgroundColor: "#f9fafb" },
-  colSno:      { width: "5%",  fontSize: 7 },
-  colDesc:     { width: "35%", fontSize: 7 },
-  colHsn:      { width: "15%", fontSize: 7 },
-  colQty:      { width: "10%", fontSize: 7, textAlign: "right" },
-  colTaxable:  { width: "17%", fontSize: 7, textAlign: "right" },
+  colSno:      { width: "4%",  fontSize: 7 },
+  colDesc:     { width: "30%", fontSize: 7 },
+  colHsn:      { width: "12%", fontSize: 7 },
+  colQty:      { width: "8%",  fontSize: 7, textAlign: "right" },
+  colTaxable:  { width: "18%", fontSize: 7, textAlign: "right" },
   colGst:      { width: "8%",  fontSize: 7, textAlign: "right" },
-  colTotal:    { width: "10%", fontSize: 7, textAlign: "right" },
+  colTotal:    { width: "20%", fontSize: 7, textAlign: "right" },
   thText: { color: "#fff", fontSize: 7, fontFamily: "Helvetica-Bold" },
   tdText: { fontSize: 7.5, color: "#111" },
   // Totals
@@ -297,51 +299,56 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
           </View>
         </View>
 
-        {/* Transport details */}
-        <Text style={styles.sectionTitle}>Transport Details</Text>
-        <View style={styles.transportGrid}>
-          <View style={styles.transportCell}>
-            <Text style={styles.transportLabel}>Mode</Text>
-            <Text style={styles.transportValue}>{TRANSPORT_MODE_LABELS[ewb.transport_mode] ?? ewb.transport_mode}</Text>
+        {/* Transport details — unified box */}
+        <View style={[styles.transportBox, { marginTop: 12 }]}>
+          <Text style={styles.transportBoxLabel}>Transport Details</Text>
+          {/* Row 1: Mode / Distance / Transporter / Transporter GSTIN */}
+          <View style={styles.transportRow}>
+            <View style={styles.transportField}>
+              <Text style={styles.transportFieldLabel}>Mode</Text>
+              <Text style={styles.transportFieldValue}>{TRANSPORT_MODE_LABELS[ewb.transport_mode] ?? ewb.transport_mode}</Text>
+            </View>
+            <View style={styles.transportField}>
+              <Text style={styles.transportFieldLabel}>Distance (km)</Text>
+              <Text style={styles.transportFieldValue}>{ewb.distance_km ?? "—"}</Text>
+            </View>
+            <View style={styles.transportField}>
+              <Text style={styles.transportFieldLabel}>Transporter</Text>
+              <Text style={styles.transportFieldValue}>{ewb.transporter_name || "—"}</Text>
+            </View>
+            <View style={styles.transportField}>
+              <Text style={styles.transportFieldLabel}>Transporter GSTIN</Text>
+              <Text style={styles.transportFieldValue}>{ewb.transporter_id || "—"}</Text>
+            </View>
           </View>
-          <View style={styles.transportCell}>
-            <Text style={styles.transportLabel}>Distance (km)</Text>
-            <Text style={styles.transportValue}>{ewb.distance_km ?? "—"}</Text>
-          </View>
-          {ewb.transporter_name && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>Transporter</Text>
-              <Text style={styles.transportValue}>{ewb.transporter_name}</Text>
-            </View>
-          )}
-          {ewb.transporter_id && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>Transporter GSTIN</Text>
-              <Text style={styles.transportValue}>{ewb.transporter_id}</Text>
-            </View>
-          )}
-          {isRoad && ewb.vehicle_no && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>Vehicle No.</Text>
-              <Text style={styles.transportValue}>{ewb.vehicle_no}</Text>
-            </View>
-          )}
+          {/* Row 2 (Road): Vehicle No. / Vehicle Type */}
           {isRoad && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>Vehicle Type</Text>
-              <Text style={styles.transportValue}>{ewb.vehicle_type === "O" ? "ODC" : "Regular"}</Text>
+            <View style={[styles.transportRow, { marginBottom: 0 }]}>
+              <View style={styles.transportField}>
+                <Text style={styles.transportFieldLabel}>Vehicle No.</Text>
+                <Text style={styles.transportFieldValue}>{ewb.vehicle_no || "—"}</Text>
+              </View>
+              <View style={styles.transportField}>
+                <Text style={styles.transportFieldLabel}>Vehicle Type</Text>
+                <Text style={styles.transportFieldValue}>{ewb.vehicle_type === "O" ? "ODC" : "Regular"}</Text>
+              </View>
+              <View style={styles.transportField} />
+              <View style={styles.transportField} />
             </View>
           )}
-          {!isRoad && ewb.trans_doc_no && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>LR / RR / AWB No.</Text>
-              <Text style={styles.transportValue}>{ewb.trans_doc_no}</Text>
-            </View>
-          )}
-          {!isRoad && ewb.trans_doc_date && (
-            <View style={styles.transportCell}>
-              <Text style={styles.transportLabel}>Doc Date</Text>
-              <Text style={styles.transportValue}>{fmtDate(ewb.trans_doc_date)}</Text>
+          {/* Row 2 (Non-Road): LR / RR / AWB No. + Doc Date */}
+          {!isRoad && (ewb.trans_doc_no || ewb.trans_doc_date) && (
+            <View style={[styles.transportRow, { marginBottom: 0 }]}>
+              <View style={styles.transportField}>
+                <Text style={styles.transportFieldLabel}>LR / RR / AWB No.</Text>
+                <Text style={styles.transportFieldValue}>{ewb.trans_doc_no || "—"}</Text>
+              </View>
+              <View style={styles.transportField}>
+                <Text style={styles.transportFieldLabel}>Doc Date</Text>
+                <Text style={styles.transportFieldValue}>{ewb.trans_doc_date ? fmtDate(ewb.trans_doc_date) : "—"}</Text>
+              </View>
+              <View style={styles.transportField} />
+              <View style={styles.transportField} />
             </View>
           )}
         </View>

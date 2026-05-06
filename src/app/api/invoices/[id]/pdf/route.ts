@@ -31,7 +31,7 @@ export async function GET(
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
+      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_footer_text_invoice, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
       .eq("id", ownerId)
       .single(),
     supabase
@@ -60,7 +60,7 @@ export async function GET(
     notes: invoice.notes,
     theme: (invoice.theme ?? profile?.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
     accent_color: profile?.pdf_accent_color ?? null,
-    footer_text: profile?.pdf_footer_text ?? null,
+    footer_text: profile?.pdf_footer_text_invoice ?? profile?.pdf_footer_text ?? null,
     terms: profile?.pdf_terms ?? null,
     show_amount_in_words: profile?.pdf_show_amount_in_words ?? false,
     seller_state_code: (invoice.seller_state_code as string)?.trim(),

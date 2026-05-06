@@ -32,6 +32,9 @@ type Profile = {
   pdf_theme: "classic" | "minimal" | "modern" | null;
   pdf_accent_color: string | null;
   pdf_footer_text: string | null;
+  pdf_footer_text_invoice: string | null;
+  pdf_footer_text_quotation: string | null;
+  pdf_footer_text_ewb: string | null;
   pdf_terms: string | null;
   pdf_show_amount_in_words: boolean | null;
   pdf_print_copies: boolean | null;
@@ -72,6 +75,9 @@ export default function SettingsPage() {
     pdf_theme: "classic" as "classic" | "minimal" | "modern",
     pdf_accent_color: "",
     pdf_footer_text: "",
+    pdf_footer_text_invoice: "",
+    pdf_footer_text_quotation: "",
+    pdf_footer_text_ewb: "",
     pdf_terms: "",
     pdf_show_amount_in_words: false,
     pdf_print_copies: false,
@@ -98,6 +104,9 @@ export default function SettingsPage() {
             pdf_theme: (data.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
             pdf_accent_color: data.pdf_accent_color ?? "",
             pdf_footer_text: data.pdf_footer_text ?? "",
+            pdf_footer_text_invoice: data.pdf_footer_text_invoice ?? "",
+            pdf_footer_text_quotation: data.pdf_footer_text_quotation ?? "",
+            pdf_footer_text_ewb: data.pdf_footer_text_ewb ?? "",
             pdf_terms: data.pdf_terms ?? "",
             pdf_show_amount_in_words: data.pdf_show_amount_in_words ?? false,
             pdf_print_copies: data.pdf_print_copies ?? false,
@@ -208,6 +217,9 @@ export default function SettingsPage() {
           pdf_theme: form.pdf_theme,
           pdf_accent_color: form.pdf_accent_color || null,
           pdf_footer_text: form.pdf_footer_text || null,
+          pdf_footer_text_invoice: form.pdf_footer_text_invoice || null,
+          pdf_footer_text_quotation: form.pdf_footer_text_quotation || null,
+          pdf_footer_text_ewb: form.pdf_footer_text_ewb || null,
           pdf_terms: form.pdf_terms || null,
           pdf_show_amount_in_words: form.pdf_show_amount_in_words,
           pdf_print_copies: form.pdf_print_copies,
@@ -583,17 +595,51 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          {/* Custom footer text */}
-          <div className="space-y-1.5">
-            <Label htmlFor="pdf_footer_text">PDF Footer Text</Label>
-            <Input
-              id="pdf_footer_text"
-              value={form.pdf_footer_text}
-              onChange={(e) => set("pdf_footer_text", e.target.value)}
-              placeholder="Bank: HDFC | A/C: 1234567890 | IFSC: HDFC0001234"
-              maxLength={200}
-            />
-            <p className="text-xs text-muted-foreground">Appears at the bottom of every PDF. Useful for bank details or UPI ID.</p>
+          {/* Custom footer text — global + per document type */}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pdf_footer_text">PDF Footer Text (Global Default)</Label>
+              <Input
+                id="pdf_footer_text"
+                value={form.pdf_footer_text}
+                onChange={(e) => set("pdf_footer_text", e.target.value)}
+                placeholder="Bank: HDFC | A/C: 1234567890 | IFSC: HDFC0001234"
+                maxLength={200}
+              />
+              <p className="text-xs text-muted-foreground">Appears at the bottom of every PDF unless overridden below.</p>
+            </div>
+            <div className="pl-3 border-l-2 border-muted space-y-2.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="pdf_footer_text_invoice" className="text-muted-foreground font-normal">Invoice footer override</Label>
+                <Input
+                  id="pdf_footer_text_invoice"
+                  value={form.pdf_footer_text_invoice}
+                  onChange={(e) => set("pdf_footer_text_invoice", e.target.value)}
+                  placeholder="Leave blank to use the global default"
+                  maxLength={200}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pdf_footer_text_quotation" className="text-muted-foreground font-normal">Quotation footer override</Label>
+                <Input
+                  id="pdf_footer_text_quotation"
+                  value={form.pdf_footer_text_quotation}
+                  onChange={(e) => set("pdf_footer_text_quotation", e.target.value)}
+                  placeholder="Leave blank to use the global default"
+                  maxLength={200}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pdf_footer_text_ewb" className="text-muted-foreground font-normal">E-Way Bill footer override</Label>
+                <Input
+                  id="pdf_footer_text_ewb"
+                  value={form.pdf_footer_text_ewb}
+                  onChange={(e) => set("pdf_footer_text_ewb", e.target.value)}
+                  placeholder="Leave blank to use the global default"
+                  maxLength={200}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Terms & Conditions */}

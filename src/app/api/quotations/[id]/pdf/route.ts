@@ -26,7 +26,7 @@ export async function GET(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
+    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_footer_text_quotation, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
     .eq("id", ownerId)
     .single();
 
@@ -39,7 +39,7 @@ export async function GET(
     notes: quote.notes ?? null,
     theme: (quote.theme ?? profile?.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
     accent_color: profile?.pdf_accent_color ?? null,
-    footer_text: profile?.pdf_footer_text ?? null,
+    footer_text: profile?.pdf_footer_text_quotation ?? profile?.pdf_footer_text ?? null,
     terms: profile?.pdf_terms ?? null,
     show_amount_in_words: profile?.pdf_show_amount_in_words ?? false,
     seller_state_code: (quote.seller_state_code as string)?.trim(),
