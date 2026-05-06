@@ -49,9 +49,6 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const isInterState = (invoice.seller_state_code as string)?.trim() !== (invoice.buyer_state_code as string)?.trim();
 
-  // HSN codes starting with 99xxxx are services (SAC codes); goods have 4–8 digit HSN
-  const hasGoods = lines.some((l) => l.hsn_sac_code && !l.hsn_sac_code.trim().startsWith("99"));
-
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Page header */}
@@ -171,14 +168,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {/* e-Invoice (IRN) */}
       <EInvoiceSection invoiceId={id} />
 
-      {/* e-Way Bill */}
-      {hasGoods ? (
-        <EWayBillSection invoiceId={id} />
-      ) : (
-        <div className="rounded-xl border border-dashed bg-gray-50 p-5 text-center text-sm text-muted-foreground">
-          e-Way Bill applies to movement of goods only. All line items on this invoice appear to be services (SAC code 99xxxx).
-        </div>
-      )}
+      {/* e-Way Bill — shown for all invoices; required for goods movement >₹50k */}
+      <EWayBillSection invoiceId={id} />
     </div>
   );
 }
