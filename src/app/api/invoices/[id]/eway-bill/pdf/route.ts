@@ -30,7 +30,7 @@ export async function GET(
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("business_name, gstin, address, city, state_code, pincode")
+      .select("business_name, gstin, address, city, state_code, pincode, pdf_accent_color, pdf_show_amount_in_words, pdf_footer_text")
       .eq("id", ownerId)
       .single(),
   ]);
@@ -95,6 +95,9 @@ export async function GET(
       sort_order: number; description: string; hsn_sac_code: string;
       quantity: number; gst_rate: number; taxable_amount: number; line_total: number;
     }>),
+    accent_color: profile?.pdf_accent_color ?? null,
+    show_amount_in_words: profile?.pdf_show_amount_in_words ?? false,
+    footer_text: profile?.pdf_footer_text ?? null,
   };
 
   const buffer = await renderToBuffer(createElement(EWayBillPDF, { data: pdfData }));

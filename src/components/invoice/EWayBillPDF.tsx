@@ -7,6 +7,8 @@ import {
 } from "@react-pdf/renderer";
 import { stateLabel } from "@/lib/gst";
 
+const DEFAULT_ACCENT = "#1a56db";
+
 const styles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
@@ -14,9 +16,8 @@ const styles = StyleSheet.create({
     padding: 36,
     color: "#111",
   },
-  // Header band
+  // Header band — background is applied dynamically
   headerBand: {
-    backgroundColor: "#1a56db",
     borderRadius: 4,
     padding: "10 14",
     marginBottom: 14,
@@ -69,11 +70,9 @@ const styles = StyleSheet.create({
   },
   transportLabel: { fontSize: 6.5, color: "#9ca3af", marginBottom: 2 },
   transportValue: { fontSize: 8, fontFamily: "Helvetica-Bold" },
-  // Table
+  // Table — header background applied dynamically
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#1a56db",
-    color: "#fff",
     padding: "5 6",
     borderRadius: 2,
   },
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     marginTop: 10,
   },
-  totalsBox: { width: 200 },
+  totalsBox: { width: 220 },
   totalLine: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
   totalLabel: { fontSize: 8, color: "#555" },
   totalValue: { fontSize: 8, color: "#111" },
@@ -107,12 +106,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     borderTopWidth: 1.5,
-    borderTopColor: "#1a56db",
     paddingTop: 4,
     marginTop: 3,
   },
   grandLabel: { fontSize: 10, fontFamily: "Helvetica-Bold" },
-  grandValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#1a56db" },
+  grandValue: { fontSize: 10, fontFamily: "Helvetica-Bold" },
+  amountInWordsText: { fontSize: 7.5, color: "#555", fontStyle: "italic", marginTop: 4 },
   // Doc reference
   docRef: {
     marginTop: 12,
@@ -161,6 +160,9 @@ export type EWayBillPDFData = {
   total_gst: number;
   total_amount: number;
   is_inter_state: boolean;
+  accent_color?: string | null;
+  show_amount_in_words?: boolean | null;
+  footer_text?: string | null;
   eway_bill: {
     eway_bill_number: string;
     valid_until: string | null;
@@ -214,17 +216,46 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function amountInWords(amount: number): string {
+  const rounded = Math.round(amount * 100);
+  const rupees = Math.floor(rounded / 100);
+  const paise = rounded % 100;
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  function toWords(n: number): string {
+    if (n === 0) return "";
+    if (n < 20) return ones[n];
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
+    if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + toWords(n % 100) : "");
+    if (n < 100000) return toWords(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + toWords(n % 1000) : "");
+    if (n < 10000000) return toWords(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + toWords(n % 100000) : "");
+    return toWords(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + toWords(n % 10000000) : "");
+  }
+  if (rupees === 0 && paise === 0) return "Zero Rupees Only";
+  let result = rupees > 0 ? toWords(rupees) + " Rupees" : "";
+  if (paise > 0) result += (result ? " and " : "") + toWords(paise) + " Paise";
+  return result + " Only";
+}
+
 export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
   const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
   const ewb = data.eway_bill;
   const isRoad = ewb.transport_mode === "1";
+  const accent = (data.accent_color && /^#[0-9a-fA-F]{6}$/.test(data.accent_color))
+    ? data.accent_color
+    : DEFAULT_ACCENT;
+  const effectiveFooter = data.footer_text?.trim() || "This is a computer-generated document";
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
 
         {/* Header band */}
-        <View style={styles.headerBand}>
+        <View style={[styles.headerBand, { backgroundColor: accent }]}>
           <View>
             <Text style={styles.headerTitle}>e-WAY BILL</Text>
             <Text style={styles.headerSubtitle}>Transport Document — carry with goods during transit</Text>
@@ -343,7 +374,7 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
 
         {/* Line items */}
         <Text style={styles.sectionTitle}>Goods / Items</Text>
-        <View style={[styles.tableHeader]}>
+        <View style={[styles.tableHeader, { backgroundColor: accent }]}>
           <Text style={[styles.thText, styles.colSno]}>#</Text>
           <Text style={[styles.thText, styles.colDesc]}>Description</Text>
           <Text style={[styles.thText, styles.colHsn]}>HSN/SAC</Text>
@@ -388,10 +419,13 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
                 </View>
               </>
             )}
-            <View style={styles.grandLine}>
+            <View style={[styles.grandLine, { borderTopColor: accent }]}>
               <Text style={styles.grandLabel}>Invoice Total</Text>
-              <Text style={styles.grandValue}>{fmtCurrency(data.total_amount)}</Text>
+              <Text style={[styles.grandValue, { color: accent }]}>{fmtCurrency(data.total_amount)}</Text>
             </View>
+            {data.show_amount_in_words && (
+              <Text style={styles.amountInWordsText}>{amountInWords(data.total_amount)}</Text>
+            )}
           </View>
         </View>
 
@@ -407,7 +441,7 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>e-Way Bill: {ewb.eway_bill_number}</Text>
           <Text style={styles.footerText}>Invoice #{data.invoice_number}</Text>
-          <Text style={styles.footerText}>This is a computer-generated document</Text>
+          <Text style={styles.footerText}>{effectiveFooter}</Text>
         </View>
 
       </Page>
