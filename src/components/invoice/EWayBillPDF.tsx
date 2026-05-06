@@ -86,6 +86,8 @@ const styles = StyleSheet.create({
     padding: "4 6",
   },
   tableRowAlt: { backgroundColor: "#f9fafb" },
+  // Column widths sum to 100%. Total is widened to 20% (was 10%) to prevent
+  // long currency values (e.g. "Rs. 31,08,868.12") from wrapping to a second line.
   colSno:      { width: "4%",  fontSize: 7 },
   colDesc:     { width: "30%", fontSize: 7 },
   colHsn:      { width: "12%", fontSize: 7 },
