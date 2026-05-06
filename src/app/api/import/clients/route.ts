@@ -82,20 +82,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const toInsert = rows.slice(1).map((row) => ({
-    user_id:    ownerId,
-    name:       row[nameIdx] || "",
-    gstin:      row[gstinIdx]     !== undefined ? row[gstinIdx]?.toUpperCase()     || null : null,
-    email:      row[emailIdx]     !== undefined ? row[emailIdx]                    || null : null,
-    phone:      row[phoneIdx]     !== undefined ? row[phoneIdx]                    || null : null,
-    address:    row[addressIdx]   !== undefined ? row[addressIdx]                  || "" : "",
-    city:       row[cityIdx]      !== undefined ? row[cityIdx]                     || null : null,
-    state_code: (row[stateCodeIdx] || "").padStart(2, "0").slice(0, 2),
-    pincode:    row[pincodeIdx]   !== undefined ? row[pincodeIdx]?.replace(/\D/g, "").slice(0, 6) || null : null,
-  })).filter((r) => r.name);
+  const toInsert = rows.slice(1).map((row) => {
+    const stateCode = (row[stateCodeIdx] || "").trim();
+    return {
+      user_id:    ownerId,
+      name:       row[nameIdx] || "",
+      gstin:      row[gstinIdx]     !== undefined ? row[gstinIdx]?.toUpperCase()     || null : null,
+      email:      row[emailIdx]     !== undefined ? row[emailIdx]                    || null : null,
+      phone:      row[phoneIdx]     !== undefined ? row[phoneIdx]                    || null : null,
+      address:    row[addressIdx]   !== undefined ? row[addressIdx]                  || "" : "",
+      city:       row[cityIdx]      !== undefined ? row[cityIdx]                     || null : null,
+      // Pad single-digit state codes (e.g. "9" → "09") as required by GST portal
+      state_code: stateCode ? stateCode.padStart(2, "0").slice(0, 2) : null,
+      pincode:    row[pincodeIdx]   !== undefined ? row[pincodeIdx]?.replace(/\D/g, "").slice(0, 6) || null : null,
+    };
+  }).filter((r) => r.name && r.state_code);
 
   if (toInsert.length === 0) {
-    return NextResponse.json(apiError("No valid rows found in CSV", "VALIDATION_ERROR"), { status: 400 });
+    return NextResponse.json(apiError("No valid rows found in CSV (name and state_code are required)", "VALIDATION_ERROR"), { status: 400 });
   }
 
   const { data, error } = await supabase

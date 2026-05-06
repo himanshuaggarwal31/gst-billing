@@ -92,6 +92,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Fetch the owner's profile state_code to use as default when CSV rows don't specify it
+  const { data: ownerProfile } = await supabase
+    .from("profiles")
+    .select("state_code")
+    .eq("id", ownerId)
+    .single();
+  // Default to owner's registered state; falls back to "27" (Maharashtra) if unset
+  const defaultStateCode = ownerProfile?.state_code || "27";
+
   // Group rows by invoice_number (multiple rows = multiple line items)
   const invoiceMap = new Map<string, {
     invoice_number: string;
@@ -120,8 +129,8 @@ export async function POST(req: NextRequest) {
         due_date:          dueDateIdx !== -1 ? row[dueDateIdx] || null : null,
         client_name:       row[clientNameIdx] || "",
         client_gstin:      clientGstinIdx !== -1 ? row[clientGstinIdx]?.toUpperCase() || null : null,
-        seller_state_code: sellerStateIdx !== -1 ? (row[sellerStateIdx] || "").padStart(2, "0").slice(0, 2) : "27",
-        buyer_state_code:  buyerStateIdx !== -1 ? (row[buyerStateIdx] || "").padStart(2, "0").slice(0, 2) : "27",
+        seller_state_code: sellerStateIdx !== -1 ? (row[sellerStateIdx] || "").padStart(2, "0").slice(0, 2) : defaultStateCode,
+        buyer_state_code:  buyerStateIdx !== -1 ? (row[buyerStateIdx] || "").padStart(2, "0").slice(0, 2) : defaultStateCode,
         payment_status:    statusIdx !== -1 ? (["paid", "pending", "partial"].includes(row[statusIdx]) ? row[statusIdx] : "pending") : "pending",
         notes:             notesIdx !== -1 ? row[notesIdx] || null : null,
         lines:             [],
@@ -173,7 +182,7 @@ export async function POST(req: NextRequest) {
           name:       clientName,
           gstin:      inv?.client_gstin || null,
           address:    "",
-          state_code: (inv?.buyer_state_code || "27").padStart(2, "0").slice(0, 2),
+          state_code: (inv?.buyer_state_code || defaultStateCode).padStart(2, "0").slice(0, 2),
         })
         .select("id")
         .single();

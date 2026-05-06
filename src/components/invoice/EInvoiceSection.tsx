@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +41,6 @@ export function EInvoiceSection({ invoiceId }: { invoiceId: string }) {
   const [saving, setSaving]       = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     fetch(`/api/invoices/${invoiceId}/e-invoice`)
@@ -280,7 +279,6 @@ export function EInvoiceSection({ invoiceId }: { invoiceId: string }) {
           </div>
         )}
 
-        <canvas ref={canvasRef} className="hidden" />
       </CardContent>
     </Card>
   );

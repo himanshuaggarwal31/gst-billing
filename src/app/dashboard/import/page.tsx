@@ -145,7 +145,7 @@ export default function ImportPage() {
           <li>Dates must be in <strong>YYYY-MM-DD</strong> format (e.g. 2024-04-01).</li>
           <li>State codes are 2-digit GST state codes (e.g. 27 for Maharashtra, 09 for UP).</li>
           <li>For invoices, each line item is a separate row with the same invoice number.</li>
-          <li>Duplicate invoice numbers in invoices import will show an error — use unique numbers.</li>
+          <li>Duplicate invoice numbers in invoice import will show an error — use unique numbers.</li>
         </ul>
       </div>
 
