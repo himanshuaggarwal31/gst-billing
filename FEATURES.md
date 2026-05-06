@@ -61,8 +61,24 @@ Send a payment reminder email to clients with overdue or pending invoices direct
 
 ### � GSTR-1 Export
 One-click CSV export of all invoices in GSTR-1 compatible format (B2B and B2C sections). Choose any month, download instantly, and hand it to your accountant or upload directly to the GST portal.
+### 📋 GSTR-3B Export
+Download a ready-to-file GSTR-3B summary CSV for any month — outward supplies, ITC from expenses, and net GST payable — in one click. Covers Table 3.1 (output tax) and Table 4A (ITC). Works alongside GSTR-1 for complete monthly return filing.
 
-### 📈 Business Analytics
+### 🧮 ITC Ledger (Input Tax Credit)
+See exactly how much GST you can claim back from your business expenses each month. The ITC Ledger shows GST collected on invoices, GST paid on purchases, and your net monthly liability — so you never overpay.
+
+### 🔢 HSN/SAC Code Autocomplete
+Start typing a product code or description and the invoice form instantly suggests matching HSN (goods) and SAC (services) codes with their standard GST rates. Covers 80+ common codes across IT services, manufacturing, trading, and more.
+### � Proforma Invoice / Quotation
+Send a professional quotation before the work begins. Once the client accepts, convert it to a tax invoice in one click — all line items, rates, and taxes carry over automatically. Track quote status (Draft → Sent → Accepted → Converted) and never lose track of pending proposals.
+
+### 📊 Client Statement of Accounts
+Pull up a full transaction history for any client — every invoice raised, every payment received, and every credit note issued — in a single view. See the running balance instantly so you always know exactly what a client owes.
+
+### 📉 Aging Report
+Know who owes you and for how long. The Aging Report groups outstanding invoices into buckets (Current / 1–30 / 31–60 / 61–90 / 90+ days overdue) so your collections team knows where to focus first. Filter to any bucket to see the exact invoices and amounts.
+
+
 See your revenue, expenses, and GST in interactive charts. Track monthly trends, identify your top clients by revenue, and know your net GST liability at a glance — without touching a spreadsheet.
 
 ### �🔄 Recurring Invoices

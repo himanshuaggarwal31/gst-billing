@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { INDIAN_STATE_CODES } from "@/lib/gst";
+import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
 import { Badge } from "@/components/ui/badge";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 type Profile = {
   business_name: string;
@@ -277,10 +278,8 @@ export default function SettingsPage() {
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                      <SelectItem key={code} value={code}>
-                        {code} – {name}
-                      </SelectItem>
+                    {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                      <SelectItem key={code} value={code}>{stateLabel(code)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -401,7 +400,7 @@ export default function SettingsPage() {
             <p className="font-medium capitalize">{profile?.plan ?? "free"}</p>
             {profile?.plan === "free" && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                {profile.invoice_count_this_month}/5 invoices used this month
+                {profile.invoice_count_this_month}/{PLAN_CONFIG.free.invoicesPerMonth} invoices used this month
               </p>
             )}
           </div>

@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { calculateInvoiceTotals, INDIAN_STATE_CODES, GST_RATES } from "@/lib/gst";
+import { calculateInvoiceTotals, INDIAN_STATE_CODES, GST_RATES, stateLabel } from "@/lib/gst";
+import { HSN_SAC_CODES } from "@/lib/hsn-master";
 import type { Client } from "@/components/clients/ClientFormDialog";
 import type { Product } from "@/components/products/ProductFormDialog";
 
@@ -121,7 +122,16 @@ export default function InvoiceForm({ initialData }: Props) {
     fetch("/api/products")
       .then((r) => r.json())
       .then((j) => j.data && setProducts(j.data));
-    if (!isEdit) fetchNextNumber();
+    if (!isEdit) {
+      fetchNextNumber();
+      fetch("/api/profile")
+        .then((r) => r.json())
+        .then((j) => {
+          if (j.data?.state_code) {
+            setHeader((h) => ({ ...h, seller_state_code: h.seller_state_code || j.data.state_code }));
+          }
+        });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -181,7 +191,7 @@ export default function InvoiceForm({ initialData }: Props) {
   const selectedClient = clients.find((c) => c.id === header.client_id);
   const isInterState =
     header.seller_state_code && selectedClient
-      ? header.seller_state_code !== selectedClient.state_code
+      ? header.seller_state_code.trim() !== selectedClient.state_code.trim()
       : false;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -262,7 +272,7 @@ export default function InvoiceForm({ initialData }: Props) {
               <option value="">Select client…</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} ({c.state_code})
+                  {c.name} ({c.state_code.trim() ? stateLabel(c.state_code.trim()) : "no state"})
                 </option>
               ))}
             </select>
@@ -322,10 +332,8 @@ export default function InvoiceForm({ initialData }: Props) {
               required
             >
               <option value="">Select state…</option>
-              {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                <option key={code} value={code}>
-                  {code} — {name}
-                </option>
+              {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                <option key={code} value={code}>{stateLabel(code)}</option>
               ))}
             </select>
           </div>
@@ -460,6 +468,7 @@ export default function InvoiceForm({ initialData }: Props) {
                       value={line.hsn_sac_code}
                       onChange={(e) => setLine(idx, "hsn_sac_code", e.target.value)}
                       placeholder="998314"
+                      list="hsn-sac-list"
                       required
                     />
                   </div>
@@ -562,6 +571,15 @@ export default function InvoiceForm({ initialData }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* HSN/SAC autocomplete datalist */}
+      <datalist id="hsn-sac-list">
+        {HSN_SAC_CODES.map((entry) => (
+          <option key={entry.code} value={entry.code}>
+            {entry.description} ({entry.gstRate}% GST)
+          </option>
+        ))}
+      </datalist>
     </form>
   );
 }

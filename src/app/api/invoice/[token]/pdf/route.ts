@@ -24,18 +24,25 @@ export async function GET(
 
   if (error || !invoice) return new NextResponse("Invoice not found", { status: 404 });
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
-    .eq("id", invoice.user_id)
-    .single();
+  const [{ data: profileData }, { data: ewb }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
+      .eq("id", invoice.user_id)
+      .single(),
+    supabase
+      .from("eway_bills")
+      .select("eway_bill_number, valid_until")
+      .eq("invoice_id", invoice.id)
+      .maybeSingle(),
+  ]);
 
   const pdfData = {
     invoice_number: invoice.invoice_number,
     invoice_date: invoice.invoice_date,
     due_date: invoice.due_date,
     payment_status: invoice.payment_status,
-    pdf_status_style: (profile?.pdf_status_style ?? "stamp") as "stamp" | "badge" | "none",
+    pdf_status_style: (profileData?.pdf_status_style ?? "stamp") as "stamp" | "badge" | "none",
     notes: invoice.notes,
     theme: invoice.theme ?? "classic",
     seller_state_code: invoice.seller_state_code,
@@ -47,17 +54,19 @@ export async function GET(
     total_igst: invoice.total_igst,
     total_gst: invoice.total_gst,
     total_amount: invoice.total_amount,
+    eway_bill_number: ewb?.eway_bill_number ?? null,
+    eway_bill_valid_until: ewb?.valid_until ?? null,
     seller: {
-      business_name: profile?.business_name ?? "Business",
-      gstin: profile?.gstin ?? null,
-      address: profile?.address ?? null,
-      city: profile?.city ?? null,
-      state_code: profile?.state_code ?? null,
-      pincode: profile?.pincode ?? null,
-      email: profile?.business_email || profile?.email || "",
-      phone: (profile?.business_phone || profile?.phone) ?? null,
-      pan: profile?.pan ?? null,
-      logo_url: profile?.logo_url ?? null,
+      business_name: profileData?.business_name ?? "Business",
+      gstin: profileData?.gstin ?? null,
+      address: profileData?.address ?? null,
+      city: profileData?.city ?? null,
+      state_code: profileData?.state_code ?? null,
+      pincode: profileData?.pincode ?? null,
+      email: profileData?.business_email || profileData?.email || "",
+      phone: (profileData?.business_phone || profileData?.phone) ?? null,
+      pan: profileData?.pan ?? null,
+      logo_url: profileData?.logo_url ?? null,
     },
     client: invoice.clients,
     line_items: invoice.invoice_line_items,

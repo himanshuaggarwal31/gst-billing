@@ -4,7 +4,8 @@ import InvoiceForm from "@/components/invoice/InvoiceForm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const FREE_LIMIT = 5;
+import { PLAN_CONFIG } from "@/lib/plan-config";
+const FREE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
 
 export default async function NewInvoicePage() {
   const supabase = await createSupabaseServerClient();
@@ -48,3 +49,4 @@ export default async function NewInvoicePage() {
 
   return <InvoiceForm />;
 }
+

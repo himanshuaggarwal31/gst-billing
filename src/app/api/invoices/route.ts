@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { calculateInvoiceTotals } from "@/lib/gst";
 import { resolveOwnerId } from "@/lib/resolve-owner";
+import { PLAN_CONFIG } from "@/lib/plan-config";
 
 const LineItemSchema = z.object({
   description: z.string().min(1),
@@ -46,7 +47,7 @@ export async function GET() {
   return NextResponse.json(apiSuccess(data));
 }
 
-const FREE_PLAN_INVOICE_LIMIT = 5;
+const FREE_PLAN_INVOICE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
 
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -62,11 +63,18 @@ export async function POST(req: NextRequest) {
   // Enforce free plan limit against the owner's quota
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, invoice_count_this_month")
+    .select("plan, invoice_count_this_month, invoice_count_reset_month")
     .eq("id", ownerId)
     .single();
 
-  if (profile?.plan === "free" && (profile?.invoice_count_this_month ?? 0) >= FREE_PLAN_INVOICE_LIMIT) {
+  // Lazy monthly reset: if stored month differs from current month, treat count as 0
+  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const effectiveCount =
+    profile?.invoice_count_reset_month === currentMonth
+      ? (profile?.invoice_count_this_month ?? 0)
+      : 0;
+
+  if (profile?.plan === "free" && effectiveCount >= FREE_PLAN_INVOICE_LIMIT) {
     return NextResponse.json(
       apiError("Free plan limit reached. Upgrade to create more invoices.", "LIMIT_REACHED"),
       { status: 403 }
@@ -77,7 +85,7 @@ export async function POST(req: NextRequest) {
   const parsed = InvoiceSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"),
+      apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"),
       { status: 400 }
     );
   }
@@ -167,10 +175,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(apiError(lineErr.message, "INTERNAL_ERROR"), { status: 500 });
   }
 
-  // Increment monthly invoice counter on the owner's profile
+  // Increment monthly invoice counter (resets automatically when month changes)
   await supabase
     .from("profiles")
-    .update({ invoice_count_this_month: (profile?.invoice_count_this_month ?? 0) + 1 })
+    .update({ invoice_count_this_month: effectiveCount + 1, invoice_count_reset_month: currentMonth })
     .eq("id", ownerId);
 
   return NextResponse.json(apiSuccess(invoice), { status: 201 });

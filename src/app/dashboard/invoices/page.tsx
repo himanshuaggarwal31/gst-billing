@@ -46,7 +46,8 @@ function fmt(n: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n);
 }
 
-const FREE_LIMIT = 5;
+import { PLAN_CONFIG } from "@/lib/plan-config";
+const FREE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
 
 export default function InvoicesPage() {
   const router = useRouter();
@@ -312,9 +313,10 @@ export default function InvoicesPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono font-semibold text-gray-900 text-sm">
+                    <Link href={`/dashboard/invoices/${invoice.id}`}
+                      className="font-mono font-semibold text-gray-900 text-sm hover:underline hover:text-blue-700">
                       {invoice.invoice_number}
-                    </span>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <span className="font-medium text-gray-800 text-sm">{invoice.clients?.name ?? "—"}</span>

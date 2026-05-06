@@ -21,7 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { INDIAN_STATE_CODES, GST_RATES } from "@/lib/gst";
+import { INDIAN_STATE_CODES, GST_RATES, stateLabel } from "@/lib/gst";
 import { Plus, Trash2, Play, Pencil, RefreshCw } from "lucide-react";
 
 type Client = { id: string; name: string; state_code: string };
@@ -312,8 +312,8 @@ export default function RecurringPage() {
                 <Select value={sellerStateCode} onValueChange={setSellerStateCode}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(INDIAN_STATE_CODES).map(([code, name]) => (
-                      <SelectItem key={code} value={code}>{code} – {name}</SelectItem>
+                    {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                      <SelectItem key={code} value={code}>{stateLabel(code)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

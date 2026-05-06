@@ -113,6 +113,9 @@ export default function ProductsPage() {
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="font-medium">{p.name}</div>
+                    {p.sku && (
+                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{p.sku}</div>
+                    )}
                     {p.description && (
                       <div className="text-xs text-muted-foreground mt-0.5">{p.description}</div>
                     )}
@@ -125,7 +128,12 @@ export default function ProductsPage() {
                   <TableCell className="font-mono text-sm">{p.hsn_sac_code}</TableCell>
                   <TableCell className="text-sm">{p.unit}</TableCell>
                   <TableCell className="text-right font-medium">{fmt(p.default_rate)}</TableCell>
-                  <TableCell className="text-right text-sm">{p.default_gst_rate}%</TableCell>
+                  <TableCell className="text-right text-sm">
+                    <div>{p.default_gst_rate}%</div>
+                    {p.cess_rate > 0 && (
+                      <div className="text-xs text-muted-foreground">+{p.cess_rate}% cess</div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 justify-end">
                       <Button

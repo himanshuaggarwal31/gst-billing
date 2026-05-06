@@ -12,6 +12,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
 
 export type Client = {
   id: string;
@@ -131,14 +139,21 @@ export default function ClientFormDialog({ open, client, onClose, onSaved }: Pro
               <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>State Code * (2 digits)</Label>
-              <Input
+              <Label>State *</Label>
+              <Select
                 value={form.state_code}
-                onChange={(e) => set("state_code", e.target.value)}
-                placeholder="07"
-                maxLength={2}
+                onValueChange={(v) => set("state_code", v)}
                 required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(INDIAN_STATE_CODES).map(([code]) => (
+                    <SelectItem key={code} value={code}>{stateLabel(code)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="col-span-2 space-y-1">
               <Label>Address *</Label>

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
+import { stateLabel } from "@/lib/gst";
 
 // ── Theme definitions ─────────────────────────────────────────────────────────
 export type InvoiceTheme = "classic" | "minimal" | "modern";
@@ -60,13 +61,14 @@ const styles = StyleSheet.create({
     color: "#111",
   },
   // Header
-  headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 28 },
-  companyBlock: { maxWidth: "55%" },
-  logoImg: { width: 120, height: 40, objectFit: "contain", marginBottom: 6 },
-  companyName: { fontSize: 16, fontFamily: "Helvetica-Bold", marginBottom: 4 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
+  companyLeft: { flexDirection: "row", alignItems: "flex-start", maxWidth: "55%" },
+  logoImg: { width: 56, height: 56, objectFit: "contain", marginRight: 10 },
+  companyBlock: { justifyContent: "flex-start" },
+  companyName: { fontSize: 15, fontFamily: "Helvetica-Bold", marginBottom: 3 },
   companyDetail: { fontSize: 8, color: "#555", marginBottom: 2 },
   invoiceMeta: { alignItems: "flex-end" },
-  invoiceTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", color: "#1a56db", marginBottom: 6 },
+  invoiceTitle: { fontSize: 22, fontFamily: "Helvetica-Bold", marginBottom: 8 },
   metaRow: { flexDirection: "row", marginBottom: 2 },
   metaLabel: { fontSize: 8, color: "#888", width: 80, textAlign: "right" },
   metaValue: { fontSize: 8, fontFamily: "Helvetica-Bold", marginLeft: 6 },
@@ -188,6 +190,8 @@ export type InvoicePDFData = {
   total_igst: number;
   total_gst: number;
   total_amount: number;
+  eway_bill_number?: string | null;
+  eway_bill_valid_until?: string | null;
   seller: {
     business_name: string;
     gstin: string | null;
@@ -242,7 +246,7 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function InvoicePDF({ data }: { data: InvoicePDFData }) {
+export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel = "Invoice No." }: { data: InvoicePDFData; documentTitle?: string; documentLabel?: string }) {
   const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
   const t = THEMES[(data.theme as InvoiceTheme) ?? "classic"] ?? THEMES.classic;
   const effectiveStatusStyle = data.pdf_status_style ?? "stamp";
@@ -251,13 +255,14 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
+        {/* Header: [logo + company text] ............. [invoice meta] */}
         <View style={styles.headerRow}>
-          <View style={styles.companyBlock}>
+          <View style={styles.companyLeft}>
             {data.seller.logo_url && (
               <Image style={styles.logoImg} src={data.seller.logo_url} />
             )}
-            <Text style={styles.companyName}>{data.seller.business_name}</Text>
+            <View style={styles.companyBlock}>
+              <Text style={styles.companyName}>{data.seller.business_name}</Text>
             {data.seller.gstin && (
               <Text style={styles.companyDetail}>GSTIN: {data.seller.gstin}</Text>
             )}
@@ -275,11 +280,12 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
             {data.seller.phone && (
               <Text style={styles.companyDetail}>{data.seller.phone}</Text>
             )}
+            </View>
           </View>
           <View style={styles.invoiceMeta}>
-            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>TAX INVOICE</Text>
+            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>{documentTitle}</Text>
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Invoice No.</Text>
+              <Text style={styles.metaLabel}>{documentLabel}</Text>
               <Text style={styles.metaValue}>{data.invoice_number}</Text>
             </View>
             <View style={styles.metaRow}>
@@ -290,6 +296,18 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Due Date</Text>
                 <Text style={styles.metaValue}>{fmtDate(data.due_date)}</Text>
+              </View>
+            )}
+            {data.eway_bill_number && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>e-Way Bill No.</Text>
+                <Text style={styles.metaValue}>{data.eway_bill_number}</Text>
+              </View>
+            )}
+            {data.eway_bill_valid_until && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>EWB Valid Until</Text>
+                <Text style={styles.metaValue}>{fmtDate(data.eway_bill_valid_until)}</Text>
               </View>
             )}
             {effectiveStatusStyle === "badge" && (
@@ -308,7 +326,7 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
             <Text style={styles.partyName}>{data.seller.business_name}</Text>
             {data.seller.gstin && <Text style={styles.partyDetail}>GSTIN: {data.seller.gstin}</Text>}
             {data.seller.pan && <Text style={styles.partyDetail}>PAN: {data.seller.pan}</Text>}
-            <Text style={styles.partyDetail}>State Code: {data.seller_state_code}</Text>
+            <Text style={styles.partyDetail}>State: {data.seller_state_code?.trim() ? stateLabel(data.seller_state_code) : "—"}</Text>
           </View>
           <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
             <Text style={styles.partyName}>{data.client.name}</Text>
@@ -320,7 +338,7 @@ export function InvoicePDF({ data }: { data: InvoicePDFData }) {
               </Text>
             )}
             {data.client.email && <Text style={styles.partyDetail}>{data.client.email}</Text>}
-            <Text style={styles.partyDetail}>State Code: {data.buyer_state_code}</Text>
+            <Text style={styles.partyDetail}>State: {data.buyer_state_code?.trim() ? stateLabel(data.buyer_state_code) : "—"}</Text>
           </View>
         </View>
 
