@@ -46,6 +46,7 @@
 - [ ] #19 GSTR-2A/2B reconciliation — match your purchase invoices vs supplier-filed data; required for ITC
 - [x] #20 ITC (Input Tax Credit) ledger — running balance of GST claimable from purchase bills
 - [x] #21 HSN/SAC code master — full code list with GST rate mapping, autocomplete on invoice line items
+- [x] PDF branding preferences in Settings — default theme, brand accent colour (16-swatch picker), custom footer text, T&C block, amount in words, two-copy (Original + Duplicate) PDF toggle; theme picker collapsed in forms to save screen space; quantity enforced as whole numbers
 
 ---
 

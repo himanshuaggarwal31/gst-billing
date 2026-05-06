@@ -103,13 +103,18 @@ function LineItemRow({
 
       <div className="grid grid-cols-5 gap-2 items-end">
         {[
-          { label: "Qty", field: "quantity" as const, type: "number", step: "0.001", placeholder: "1" },
+          { label: "Qty", field: "quantity" as const, type: "number", step: "1", placeholder: "1" },
           { label: "Rate (₹)", field: "rate" as const, type: "number", step: "0.01", placeholder: "0.00" },
         ].map(({ label, field, type, step, placeholder }) => (
           <div key={field} className="space-y-1">
             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
-            <Input type={type} min="0" step={step} value={line[field]}
-              onChange={(e) => onChange(idx, field, e.target.value)}
+            <Input type={type} min={field === "quantity" ? "1" : "0"} step={step} value={line[field]}
+              onChange={(e) => {
+                const val = field === "quantity"
+                  ? String(Math.floor(Math.max(1, Number(e.target.value))))
+                  : e.target.value;
+                onChange(idx, field, val);
+              }}
               placeholder={placeholder} required />
           </div>
         ))}
@@ -164,6 +169,7 @@ export default function NewQuotationPage() {
         ...h,
         ...(numJson.data?.next_number ? { quote_number: numJson.data.next_number } : {}),
         ...(profileJson.data?.state_code ? { seller_state_code: profileJson.data.state_code } : {}),
+        ...(profileJson.data?.pdf_theme ? { theme: profileJson.data.pdf_theme } : {}),
       }));
     });
   }, []);
@@ -300,17 +306,21 @@ export default function NewQuotationPage() {
                 rows={2} placeholder="Validity terms, payment terms, scope of work, etc." className="resize-none" />
             </div>
             <div className="col-span-3 space-y-1.5">
-              <Label className="text-sm font-medium">Theme</Label>
-              <div className="flex gap-3">
-                {(["classic", "minimal", "modern"] as const).map((t) => (
-                  <button key={t} type="button" onClick={() => set("theme", t)}
-                    className={`flex-1 rounded-lg border-2 py-2 text-sm font-medium capitalize transition-colors ${
-                      header.theme === t
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
-                    }`}>{t}</button>
-                ))}
-              </div>
+              <details>
+                <summary className="cursor-pointer select-none text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 w-fit">
+                  ⚙ PDF Theme: <span className="font-medium capitalize ml-1">{header.theme}</span>
+                </summary>
+                <div className="mt-2 flex gap-3">
+                  {(["classic", "minimal", "modern"] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => set("theme", t)}
+                      className={`flex-1 rounded-lg border-2 py-2 text-sm font-medium capitalize transition-colors ${
+                        header.theme === t
+                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}>{t}</button>
+                  ))}
+                </div>
+              </details>
             </div>
           </div>
         </div>

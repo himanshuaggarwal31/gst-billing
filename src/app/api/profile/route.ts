@@ -16,6 +16,12 @@ const ProfileSchema = z.object({
   pdf_status_style: z.enum(["stamp", "badge", "none"]).optional().nullable(),
   business_email: z.string().email().optional().nullable().or(z.literal("")),
   business_phone: z.string().optional().nullable(),
+  pdf_theme: z.enum(["classic", "minimal", "modern"]).optional().nullable(),
+  pdf_accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid hex colour").optional().nullable().or(z.literal("")),
+  pdf_footer_text: z.string().optional().nullable(),
+  pdf_terms: z.string().optional().nullable(),
+  pdf_show_amount_in_words: z.boolean().optional().nullable(),
+  pdf_print_copies: z.boolean().optional().nullable(),
 });
 
 export async function GET() {
@@ -25,7 +31,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone")
+    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
     .eq("id", user.id)
     .single();
 
@@ -42,7 +48,7 @@ export async function PUT(req: NextRequest) {
   const parsed = ProfileSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"),
+      apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"),
       { status: 400 }
     );
   }

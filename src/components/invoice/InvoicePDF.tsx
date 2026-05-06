@@ -188,6 +188,13 @@ const styles = StyleSheet.create({
   eInvoiceQr: { width: 72, height: 72 },
   footer: { position: "absolute", bottom: 28, left: 40, right: 40, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 6, flexDirection: "row", justifyContent: "space-between" },
   footerText: { fontSize: 7, color: "#aaa" },
+  // Amount in words
+  amountInWordsRow: { marginTop: 4 },
+  amountInWordsText: { fontSize: 7.5, color: "#555", fontStyle: "italic" },
+  // Terms & Conditions
+  termsSection: { marginTop: 12, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 10 },
+  // Copy label (Original for Recipient / Duplicate for Supplier)
+  copyLabelText: { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#888", letterSpacing: 0.5, textTransform: "uppercase" as const, marginBottom: 4 },
 });
 
 export type InvoicePDFData = {
@@ -198,6 +205,10 @@ export type InvoicePDFData = {
   pdf_status_style?: "stamp" | "badge" | "none" | null;
   notes: string | null;
   theme?: InvoiceTheme | null;
+  accent_color?: string | null;
+  footer_text?: string | null;
+  terms?: string | null;
+  show_amount_in_words?: boolean | null;
   seller_state_code: string;
   buyer_state_code: string;
   is_inter_state: boolean;
@@ -269,244 +280,354 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function InvoicePDF({ data, documentTitle = "TAX INVOICE", documentLabel = "Invoice No." }: { data: InvoicePDFData; documentTitle?: string; documentLabel?: string }) {
+// Convert a number to Indian rupees in words (e.g. 123456.78 → "One Lakh Twenty-Three Thousand…")
+function amountInWords(amount: number): string {
+  const rounded = Math.round(amount * 100);
+  const rupees = Math.floor(rounded / 100);
+  const paise = rounded % 100;
+
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+    "Seventeen", "Eighteen", "Nineteen",
+  ];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  function toWords(n: number): string {
+    if (n === 0) return "";
+    if (n < 20) return ones[n];
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
+    if (n < 1000) return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + toWords(n % 100) : "");
+    if (n < 100000) return toWords(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + toWords(n % 1000) : "");
+    if (n < 10000000) return toWords(Math.floor(n / 100000)) + " Lakh" + (n % 100000 ? " " + toWords(n % 100000) : "");
+    return toWords(Math.floor(n / 10000000)) + " Crore" + (n % 10000000 ? " " + toWords(n % 10000000) : "");
+  }
+
+  if (rupees === 0 && paise === 0) return "Zero Rupees Only";
+  let result = rupees > 0 ? toWords(rupees) + " Rupees" : "";
+  if (paise > 0) result += (result ? " and " : "") + toWords(paise) + " Paise";
+  return result + " Only";
+}
+
+// Build effective theme, applying custom accent colour on top of the base theme
+function buildTheme(theme: InvoiceTheme, accentColor?: string | null) {
+  const base = { ...THEMES[theme] };
+  if (accentColor && /^#[0-9a-fA-F]{6}$/.test(accentColor)) {
+    base.accent = accentColor;
+    base.titleColor = accentColor;
+    base.grandTotalColor = accentColor;
+    base.dividerColor = accentColor;
+    // Minimal theme has a light gray table header — don't override that
+    if (theme !== "minimal") {
+      base.tableHeaderBg = accentColor;
+      // tableHeaderColor remains white (already set in classic/modern)
+    }
+  }
+  return base;
+}
+
+// Inner component renders a single invoice page (used twice for two-copy mode)
+function InvoicePage({
+  data,
+  documentTitle,
+  documentLabel,
+  copyLabel,
+}: {
+  data: InvoicePDFData;
+  documentTitle: string;
+  documentLabel: string;
+  copyLabel?: string | null;
+}) {
   const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
-  const t = THEMES[(data.theme as InvoiceTheme) ?? "classic"] ?? THEMES.classic;
+  const themeKey = (data.theme as InvoiceTheme) ?? "classic";
+  const t = buildTheme(themeKey, data.accent_color);
   const effectiveStatusStyle = data.pdf_status_style ?? "stamp";
   const statusInfo = STATUS_STYLE[data.payment_status] ?? STATUS_STYLE.pending;
+  const effectiveFooter = data.footer_text?.trim() || "This is a computer-generated document";
 
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header: [logo + company text] ............. [invoice meta] */}
-        <View style={styles.headerRow}>
-          <View style={styles.companyLeft}>
-            {data.seller.logo_url && (
-              <Image style={styles.logoImg} src={data.seller.logo_url} />
-            )}
-            <View style={styles.companyBlock}>
-              <Text style={styles.companyName}>{data.seller.business_name}</Text>
-            {data.seller.gstin && (
-              <Text style={styles.companyDetail}>GSTIN: {data.seller.gstin}</Text>
-            )}
-            {data.seller.address && (
-              <Text style={styles.companyDetail}>{data.seller.address}</Text>
-            )}
-            {(data.seller.city || data.seller.pincode) && (
-              <Text style={styles.companyDetail}>
-                {[data.seller.city, data.seller.pincode].filter(Boolean).join(" – ")}
-              </Text>
-            )}
-            {data.seller.email && (
-              <Text style={styles.companyDetail}>{data.seller.email}</Text>
-            )}
-            {data.seller.phone && (
-              <Text style={styles.companyDetail}>{data.seller.phone}</Text>
-            )}
-            </View>
+    <Page size="A4" style={styles.page}>
+      {/* Header: [logo + company text] ............. [invoice meta] */}
+      <View style={styles.headerRow}>
+        <View style={styles.companyLeft}>
+          {data.seller.logo_url && (
+            <Image style={styles.logoImg} src={data.seller.logo_url} />
+          )}
+          <View style={styles.companyBlock}>
+            <Text style={styles.companyName}>{data.seller.business_name}</Text>
+          {data.seller.gstin && (
+            <Text style={styles.companyDetail}>GSTIN: {data.seller.gstin}</Text>
+          )}
+          {data.seller.address && (
+            <Text style={styles.companyDetail}>{data.seller.address}</Text>
+          )}
+          {(data.seller.city || data.seller.pincode) && (
+            <Text style={styles.companyDetail}>
+              {[data.seller.city, data.seller.pincode].filter(Boolean).join(" – ")}
+            </Text>
+          )}
+          {data.seller.email && (
+            <Text style={styles.companyDetail}>{data.seller.email}</Text>
+          )}
+          {data.seller.phone && (
+            <Text style={styles.companyDetail}>{data.seller.phone}</Text>
+          )}
           </View>
-          <View style={styles.invoiceMeta}>
-            <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>{documentTitle}</Text>
+        </View>
+        <View style={styles.invoiceMeta}>
+          <Text style={[styles.invoiceTitle, { color: t.titleColor }]}>{documentTitle}</Text>
+          {copyLabel && (
+            <Text style={styles.copyLabelText}>{copyLabel}</Text>
+          )}
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>{documentLabel}</Text>
+            <Text style={styles.metaValue}>{data.invoice_number}</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Date</Text>
+            <Text style={styles.metaValue}>{fmtDate(data.invoice_date)}</Text>
+          </View>
+          {data.due_date && (
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>{documentLabel}</Text>
-              <Text style={styles.metaValue}>{data.invoice_number}</Text>
+              <Text style={styles.metaLabel}>Due Date</Text>
+              <Text style={styles.metaValue}>{fmtDate(data.due_date)}</Text>
             </View>
+          )}
+          {data.eway_bill_number && (
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Date</Text>
-              <Text style={styles.metaValue}>{fmtDate(data.invoice_date)}</Text>
+              <Text style={styles.metaLabel}>e-Way Bill No.</Text>
+              <Text style={styles.metaValue}>{data.eway_bill_number}</Text>
             </View>
-            {data.due_date && (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaLabel}>Due Date</Text>
-                <Text style={styles.metaValue}>{fmtDate(data.due_date)}</Text>
+          )}
+          {data.eway_bill_valid_until && (
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>EWB Valid Until</Text>
+              <Text style={styles.metaValue}>{fmtDate(data.eway_bill_valid_until)}</Text>
+            </View>
+          )}
+          {effectiveStatusStyle === "badge" && (
+            <View style={styles.badgePillWrap}>
+              <View style={[styles.badgePill, { backgroundColor: statusInfo.bg }]}>
+                <Text style={[styles.badgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
               </View>
-            )}
-            {data.eway_bill_number && (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaLabel}>e-Way Bill No.</Text>
-                <Text style={styles.metaValue}>{data.eway_bill_number}</Text>
-              </View>
-            )}
-            {data.eway_bill_valid_until && (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaLabel}>EWB Valid Until</Text>
-                <Text style={styles.metaValue}>{fmtDate(data.eway_bill_valid_until)}</Text>
-              </View>
-            )}
-            {effectiveStatusStyle === "badge" && (
-              <View style={styles.badgePillWrap}>
-                <View style={[styles.badgePill, { backgroundColor: statusInfo.bg }]}>
-                  <Text style={[styles.badgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
-                </View>
-              </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
+      </View>
 
-        {/* Bill To / Seller */}
-        <View style={styles.partiesRow}>
-          <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
-            <Text style={styles.partyName}>{data.seller.business_name}</Text>
-            {data.seller.gstin && <Text style={styles.partyDetail}>GSTIN: {data.seller.gstin}</Text>}
-            {data.seller.pan && <Text style={styles.partyDetail}>PAN: {data.seller.pan}</Text>}
-            <Text style={styles.partyDetail}>State: {data.seller_state_code?.trim() ? stateLabel(data.seller_state_code) : "—"}</Text>
-          </View>
-          <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
-            <Text style={styles.partyName}>{data.client.name}</Text>
-            {data.client.gstin && <Text style={styles.partyDetail}>GSTIN: {data.client.gstin}</Text>}
-            {data.client.address && <Text style={styles.partyDetail}>{data.client.address}</Text>}
-            {(data.client.city || data.client.pincode) && (
-              <Text style={styles.partyDetail}>
-                {[data.client.city, data.client.pincode].filter(Boolean).join(" – ")}
-              </Text>
-            )}
-            {data.client.email && <Text style={styles.partyDetail}>{data.client.email}</Text>}
-            <Text style={styles.partyDetail}>State: {data.buyer_state_code?.trim() ? stateLabel(data.buyer_state_code) : "—"}</Text>
-          </View>
+      {/* Bill To / Seller */}
+      <View style={styles.partiesRow}>
+        <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
+          <Text style={styles.partyName}>{data.seller.business_name}</Text>
+          {data.seller.gstin && <Text style={styles.partyDetail}>GSTIN: {data.seller.gstin}</Text>}
+          {data.seller.pan && <Text style={styles.partyDetail}>PAN: {data.seller.pan}</Text>}
+          <Text style={styles.partyDetail}>State: {data.seller_state_code?.trim() ? stateLabel(data.seller_state_code) : "—"}</Text>
         </View>
-
-        {/* Line Items Table */}
-        <View style={[styles.tableHeader, { backgroundColor: t.tableHeaderBg }]}>
-          <Text style={[styles.thText, styles.colSno, { color: t.tableHeaderColor }]}>#</Text>
-          <Text style={[styles.thText, styles.colDesc, { color: t.tableHeaderColor }]}>Description</Text>
-          <Text style={[styles.thText, styles.colHsn, { color: t.tableHeaderColor }]}>HSN/SAC</Text>
-          <Text style={[styles.thText, styles.colQty, { color: t.tableHeaderColor }]}>Qty</Text>
-          <Text style={[styles.thText, styles.colRate, { color: t.tableHeaderColor }]}>Rate</Text>
-          <Text style={[styles.thText, styles.colDisc, { color: t.tableHeaderColor }]}>Disc%</Text>
-          <Text style={[styles.thText, styles.colTaxable, { color: t.tableHeaderColor }]}>Taxable</Text>
-          <Text style={[styles.thText, styles.colGst, { color: t.tableHeaderColor }]}>GST%</Text>
-          <Text style={[styles.thText, styles.colTotal, { color: t.tableHeaderColor }]}>Total</Text>
+        <View style={[styles.partyBox, { backgroundColor: t.partyBg, borderColor: t.partyBorder }]}>
+          <Text style={styles.partyName}>{data.client.name}</Text>
+          {data.client.gstin && <Text style={styles.partyDetail}>GSTIN: {data.client.gstin}</Text>}
+          {data.client.address && <Text style={styles.partyDetail}>{data.client.address}</Text>}
+          {(data.client.city || data.client.pincode) && (
+            <Text style={styles.partyDetail}>
+              {[data.client.city, data.client.pincode].filter(Boolean).join(" – ")}
+            </Text>
+          )}
+          {data.client.email && <Text style={styles.partyDetail}>{data.client.email}</Text>}
+          <Text style={styles.partyDetail}>State: {data.buyer_state_code?.trim() ? stateLabel(data.buyer_state_code) : "—"}</Text>
         </View>
-        {lines.map((item, idx) => (
-          <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
-            <Text style={[styles.tdText, styles.colSno]}>{idx + 1}</Text>
-            <Text style={[styles.tdText, styles.colDesc]}>{item.description}</Text>
-            <Text style={[styles.tdText, styles.colHsn]}>{item.hsn_sac_code}</Text>
-            <Text style={[styles.tdText, styles.colQty]}>{item.quantity}</Text>
-            <Text style={[styles.tdText, styles.colRate]}>{fmtCurrency(item.rate)}</Text>
-            <Text style={[styles.tdText, styles.colDisc]}>{item.discount_percent}%</Text>
-            <Text style={[styles.tdText, styles.colTaxable]}>{fmtCurrency(item.taxable_amount)}</Text>
-            <Text style={[styles.tdText, styles.colGst]}>{item.gst_rate}%</Text>
-            <Text style={[styles.tdText, styles.colTotal]}>{fmtCurrency(item.line_total)}</Text>
-          </View>
-        ))}
+      </View>
 
-        {/* GST Breakdown */}
-        <View style={styles.gstBreakdown}>
-          <Text style={styles.gstBreakdownTitle}>GST Summary</Text>
+      {/* Line Items Table */}
+      <View style={[styles.tableHeader, { backgroundColor: t.tableHeaderBg }]}>
+        <Text style={[styles.thText, styles.colSno, { color: t.tableHeaderColor }]}>#</Text>
+        <Text style={[styles.thText, styles.colDesc, { color: t.tableHeaderColor }]}>Description</Text>
+        <Text style={[styles.thText, styles.colHsn, { color: t.tableHeaderColor }]}>HSN/SAC</Text>
+        <Text style={[styles.thText, styles.colQty, { color: t.tableHeaderColor }]}>Qty</Text>
+        <Text style={[styles.thText, styles.colRate, { color: t.tableHeaderColor }]}>Rate</Text>
+        <Text style={[styles.thText, styles.colDisc, { color: t.tableHeaderColor }]}>Disc%</Text>
+        <Text style={[styles.thText, styles.colTaxable, { color: t.tableHeaderColor }]}>Taxable</Text>
+        <Text style={[styles.thText, styles.colGst, { color: t.tableHeaderColor }]}>GST%</Text>
+        <Text style={[styles.thText, styles.colTotal, { color: t.tableHeaderColor }]}>Total</Text>
+      </View>
+      {lines.map((item, idx) => (
+        <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+          <Text style={[styles.tdText, styles.colSno]}>{idx + 1}</Text>
+          <Text style={[styles.tdText, styles.colDesc]}>{item.description}</Text>
+          <Text style={[styles.tdText, styles.colHsn]}>{item.hsn_sac_code}</Text>
+          <Text style={[styles.tdText, styles.colQty]}>{item.quantity}</Text>
+          <Text style={[styles.tdText, styles.colRate]}>{fmtCurrency(item.rate)}</Text>
+          <Text style={[styles.tdText, styles.colDisc]}>{item.discount_percent}%</Text>
+          <Text style={[styles.tdText, styles.colTaxable]}>{fmtCurrency(item.taxable_amount)}</Text>
+          <Text style={[styles.tdText, styles.colGst]}>{item.gst_rate}%</Text>
+          <Text style={[styles.tdText, styles.colTotal]}>{fmtCurrency(item.line_total)}</Text>
+        </View>
+      ))}
+
+      {/* GST Breakdown */}
+      <View style={styles.gstBreakdown}>
+        <Text style={styles.gstBreakdownTitle}>GST Summary</Text>
+        <View style={styles.gstRow}>
+          <Text style={styles.gstColHead}>Tax Type</Text>
+          <Text style={styles.gstColHead}>Rate</Text>
+          <Text style={styles.gstColHead}>Taxable</Text>
+          <Text style={styles.gstColHead}>Tax Amt</Text>
+        </View>
+        {data.is_inter_state ? (
           <View style={styles.gstRow}>
-            <Text style={styles.gstColHead}>Tax Type</Text>
-            <Text style={styles.gstColHead}>Rate</Text>
-            <Text style={styles.gstColHead}>Taxable</Text>
-            <Text style={styles.gstColHead}>Tax Amt</Text>
+            <Text style={styles.gstColCell}>IGST</Text>
+            <Text style={styles.gstColCell}>—</Text>
+            <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
+            <Text style={styles.gstColCell}>{fmtCurrency(data.total_igst)}</Text>
           </View>
-          {data.is_inter_state ? (
+        ) : (
+          <>
             <View style={styles.gstRow}>
-              <Text style={styles.gstColCell}>IGST</Text>
+              <Text style={styles.gstColCell}>CGST</Text>
               <Text style={styles.gstColCell}>—</Text>
               <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
-              <Text style={styles.gstColCell}>{fmtCurrency(data.total_igst)}</Text>
+              <Text style={styles.gstColCell}>{fmtCurrency(data.total_cgst)}</Text>
+            </View>
+            <View style={styles.gstRow}>
+              <Text style={styles.gstColCell}>SGST</Text>
+              <Text style={styles.gstColCell}>—</Text>
+              <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
+              <Text style={styles.gstColCell}>{fmtCurrency(data.total_sgst)}</Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Totals */}
+      <View style={styles.totalsSection}>
+        <View style={styles.totalsBox}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Taxable Amount</Text>
+            <Text style={styles.totalValue}>{fmtCurrency(data.taxable_amount)}</Text>
+          </View>
+          {data.is_inter_state ? (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>IGST</Text>
+              <Text style={styles.totalValue}>{fmtCurrency(data.total_igst)}</Text>
             </View>
           ) : (
             <>
-              <View style={styles.gstRow}>
-                <Text style={styles.gstColCell}>CGST</Text>
-                <Text style={styles.gstColCell}>—</Text>
-                <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
-                <Text style={styles.gstColCell}>{fmtCurrency(data.total_cgst)}</Text>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>CGST</Text>
+                <Text style={styles.totalValue}>{fmtCurrency(data.total_cgst)}</Text>
               </View>
-              <View style={styles.gstRow}>
-                <Text style={styles.gstColCell}>SGST</Text>
-                <Text style={styles.gstColCell}>—</Text>
-                <Text style={styles.gstColCell}>{fmtCurrency(data.taxable_amount)}</Text>
-                <Text style={styles.gstColCell}>{fmtCurrency(data.total_sgst)}</Text>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>SGST</Text>
+                <Text style={styles.totalValue}>{fmtCurrency(data.total_sgst)}</Text>
               </View>
             </>
           )}
-        </View>
-
-        {/* Totals */}
-        <View style={styles.totalsSection}>
-          <View style={styles.totalsBox}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Taxable Amount</Text>
-              <Text style={styles.totalValue}>{fmtCurrency(data.taxable_amount)}</Text>
-            </View>
-            {data.is_inter_state ? (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>IGST</Text>
-                <Text style={styles.totalValue}>{fmtCurrency(data.total_igst)}</Text>
-              </View>
-            ) : (
-              <>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>CGST</Text>
-                  <Text style={styles.totalValue}>{fmtCurrency(data.total_cgst)}</Text>
-                </View>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>SGST</Text>
-                  <Text style={styles.totalValue}>{fmtCurrency(data.total_sgst)}</Text>
-                </View>
-              </>
-            )}
-            <View style={[styles.grandTotalRow, { borderTopColor: t.dividerColor }]}>
-              <Text style={styles.grandTotalLabel}>Total</Text>
-              <Text style={[styles.grandTotalValue, { color: t.grandTotalColor }]}>{fmtCurrency(data.total_amount)}</Text>
-            </View>
+          <View style={[styles.grandTotalRow, { borderTopColor: t.dividerColor }]}>
+            <Text style={styles.grandTotalLabel}>Total</Text>
+            <Text style={[styles.grandTotalValue, { color: t.grandTotalColor }]}>{fmtCurrency(data.total_amount)}</Text>
           </View>
+          {/* Amount in words */}
+          {data.show_amount_in_words && (
+            <View style={styles.amountInWordsRow}>
+              <Text style={styles.amountInWordsText}>{amountInWords(data.total_amount)}</Text>
+            </View>
+          )}
         </View>
+      </View>
 
-        {/* Notes */}
-        {data.notes && (
-          <View style={styles.notesSection}>
-            <Text style={styles.notesLabel}>Notes</Text>
-            <Text style={styles.notesText}>{data.notes}</Text>
-          </View>
-        )}
+      {/* Notes */}
+      {data.notes && (
+        <View style={styles.notesSection}>
+          <Text style={styles.notesLabel}>Notes</Text>
+          <Text style={styles.notesText}>{data.notes}</Text>
+        </View>
+      )}
 
-        {/* e-Invoice details (IRN / ACK / QR) — mandatory when IRN is generated */}
-        {data.e_invoice?.irn && (
-          <View style={styles.eInvoiceSection}>
-            <View style={styles.eInvoiceLeft}>
-              <Text style={styles.eInvoiceSectionTitle}>e-Invoice Details (IRP Verified)</Text>
+      {/* Terms & Conditions */}
+      {data.terms && (
+        <View style={styles.termsSection}>
+          <Text style={styles.notesLabel}>Terms &amp; Conditions</Text>
+          <Text style={styles.notesText}>{data.terms}</Text>
+        </View>
+      )}
+
+      {/* e-Invoice details (IRN / ACK / QR) — mandatory when IRN is generated */}
+      {data.e_invoice?.irn && (
+        <View style={styles.eInvoiceSection}>
+          <View style={styles.eInvoiceLeft}>
+            <Text style={styles.eInvoiceSectionTitle}>e-Invoice Details (IRP Verified)</Text>
+            <View style={styles.eInvoiceRow}>
+              <Text style={styles.eInvoiceLabel}>IRN</Text>
+              <Text style={styles.eInvoiceValue}>{data.e_invoice.irn}</Text>
+            </View>
+            {data.e_invoice.ack_no && (
               <View style={styles.eInvoiceRow}>
-                <Text style={styles.eInvoiceLabel}>IRN</Text>
-                <Text style={styles.eInvoiceValue}>{data.e_invoice.irn}</Text>
+                <Text style={styles.eInvoiceLabel}>Ack. No.</Text>
+                <Text style={styles.eInvoiceValue}>{data.e_invoice.ack_no}</Text>
               </View>
-              {data.e_invoice.ack_no && (
-                <View style={styles.eInvoiceRow}>
-                  <Text style={styles.eInvoiceLabel}>Ack. No.</Text>
-                  <Text style={styles.eInvoiceValue}>{data.e_invoice.ack_no}</Text>
-                </View>
-              )}
-              {data.e_invoice.ack_date && (
-                <View style={styles.eInvoiceRow}>
-                  <Text style={styles.eInvoiceLabel}>Ack. Date</Text>
-                  <Text style={styles.eInvoiceValue}>{fmtDate(data.e_invoice.ack_date)}</Text>
-                </View>
-              )}
-            </View>
-            {data.e_invoice.qr_data_url && (
-              <Image style={styles.eInvoiceQr} src={data.e_invoice.qr_data_url} />
+            )}
+            {data.e_invoice.ack_date && (
+              <View style={styles.eInvoiceRow}>
+                <Text style={styles.eInvoiceLabel}>Ack. Date</Text>
+                <Text style={styles.eInvoiceValue}>{fmtDate(data.e_invoice.ack_date)}</Text>
+              </View>
             )}
           </View>
-        )}
-
-        {/* Footer */}
-        <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>Invoice #{data.invoice_number}</Text>
-          <Text style={styles.footerText}>This is a computer-generated invoice</Text>
+          {data.e_invoice.qr_data_url && (
+            <Image style={styles.eInvoiceQr} src={data.e_invoice.qr_data_url} />
+          )}
         </View>
+      )}
 
-        {/* Diagonal stamp overlay */}
-        {effectiveStatusStyle === "stamp" && (
-          <View style={styles.stampOverlay}>
-            <View style={[styles.stampBorderBox, { borderColor: statusInfo.color }]}>
-              <Text style={[styles.stampText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
-            </View>
+      {/* Footer */}
+      <View style={styles.footer} fixed>
+        <Text style={styles.footerText}>Invoice #{data.invoice_number}</Text>
+        <Text style={styles.footerText}>{effectiveFooter}</Text>
+      </View>
+
+      {/* Diagonal stamp overlay */}
+      {effectiveStatusStyle === "stamp" && (
+        <View style={styles.stampOverlay}>
+          <View style={[styles.stampBorderBox, { borderColor: statusInfo.color }]}>
+            <Text style={[styles.stampText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
           </View>
-        )}
-      </Page>
+        </View>
+      )}
+    </Page>
+  );
+}
+
+export function InvoicePDF({
+  data,
+  documentTitle = "TAX INVOICE",
+  documentLabel = "Invoice No.",
+  printCopies = false,
+}: {
+  data: InvoicePDFData;
+  documentTitle?: string;
+  documentLabel?: string;
+  printCopies?: boolean;
+}) {
+  if (printCopies) {
+    return (
+      <Document>
+        <InvoicePage
+          data={data}
+          documentTitle={documentTitle}
+          documentLabel={documentLabel}
+          copyLabel="ORIGINAL FOR RECIPIENT"
+        />
+        <InvoicePage
+          data={data}
+          documentTitle={documentTitle}
+          documentLabel={documentLabel}
+          copyLabel="DUPLICATE FOR SUPPLIER"
+        />
+      </Document>
+    );
+  }
+  return (
+    <Document>
+      <InvoicePage data={data} documentTitle={documentTitle} documentLabel={documentLabel} />
     </Document>
   );
 }

@@ -26,7 +26,7 @@ export async function GET(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, business_email, business_phone")
+    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
     .eq("id", ownerId)
     .single();
 
@@ -37,7 +37,11 @@ export async function GET(
     payment_status: quote.status,
     pdf_status_style: "none" as const,
     notes: quote.notes ?? null,
-    theme: (quote.theme ?? "classic") as "classic" | "minimal" | "modern",
+    theme: (quote.theme ?? profile?.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
+    accent_color: profile?.pdf_accent_color ?? null,
+    footer_text: profile?.pdf_footer_text ?? null,
+    terms: profile?.pdf_terms ?? null,
+    show_amount_in_words: profile?.pdf_show_amount_in_words ?? false,
     seller_state_code: (quote.seller_state_code as string)?.trim(),
     buyer_state_code: (quote.clients.state_code as string)?.trim(),
     is_inter_state: (quote.seller_state_code as string)?.trim() !== (quote.clients.state_code as string)?.trim(),
@@ -84,11 +88,13 @@ export async function GET(
     }),
   };
 
+  const printCopies = (profile?.pdf_print_copies ?? false);
   const buffer = await renderToBuffer(
     createElement(InvoicePDF, {
       data: pdfData,
       documentTitle: "QUOTATION",
       documentLabel: "Quote No.",
+      printCopies,
     })
   );
 

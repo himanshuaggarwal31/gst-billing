@@ -50,7 +50,10 @@ Send the invoice link to your client via WhatsApp in one click. Because that's h
 Select multiple invoices and mark them all paid, email them all, or delete them in one go. Essential when you're billing 20+ clients at month-end.
 
 ### 🎨 Invoice Themes
-Choose from multiple PDF layouts — minimal, detailed, or branded. Match your business's visual identity.
+Choose from multiple PDF layouts — minimal, detailed, or branded. Match your business's visual identity. Theme selection is tucked away to keep your form clean; change it when you need it.
+
+### 🖌️ Brand Accent Colour & PDF Customisation
+Set your brand colour once in Settings — choose from 16 curated swatches (blues, greens, reds, purples, and neutrals). The colour applies to your invoice header, table, and totals section automatically. Also configure a custom PDF footer (great for bank details or UPI ID), standard Terms & Conditions printed on every invoice, and an "Amount in Words" line — all from a single Settings screen.
 
 ### 📬 Payment Reminders
 Send a payment reminder email to clients with overdue or pending invoices directly from the invoice list. One click — the email includes the invoice details and a polite note highlighting the overdue amount.
@@ -78,7 +81,8 @@ Start typing a product code or description and the invoice form instantly sugges
 ### � Proforma Invoice / Quotation
 Send a professional quotation before the work begins. Once the client accepts, convert it to a tax invoice in one click — all line items, rates, and taxes carry over automatically. Track quote status (Draft → Sent → Accepted → Converted) and never lose track of pending proposals.
 
-### 📊 Client Statement of Accounts
+### 📄 Two-Copy Invoice PDF (Original + Duplicate)
+Enable "Two-Copy PDF" in Settings and every downloaded invoice automatically contains two pages in a single file — **Original for Recipient** and **Duplicate for Supplier** — labelled and print-ready. No more printing the same PDF twice.
 Pull up a full transaction history for any client — every invoice raised, every payment received, and every credit note issued — in a single view. See the running balance instantly so you always know exactly what a client owes.
 
 ### 📉 Aging Report

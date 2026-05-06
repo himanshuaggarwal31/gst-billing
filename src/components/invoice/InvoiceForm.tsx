@@ -130,6 +130,9 @@ export default function InvoiceForm({ initialData }: Props) {
           if (j.data?.state_code) {
             setHeader((h) => ({ ...h, seller_state_code: h.seller_state_code || j.data.state_code }));
           }
+          if (j.data?.pdf_theme && !(initialData as InvoiceFormInitialData | undefined)?.theme) {
+            setHeader((h) => ({ ...h, theme: j.data.pdf_theme }));
+          }
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -361,23 +364,27 @@ export default function InvoiceForm({ initialData }: Props) {
           </div>
 
           <div className="col-span-2 space-y-1">
-            <Label>Invoice Theme</Label>
-            <div className="flex gap-3">
-              {(["classic", "minimal", "modern"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => set("theme", t)}
-                  className={`flex-1 rounded-lg border-2 py-2 text-sm font-medium capitalize transition-colors ${
-                    header.theme === t
-                      ? "border-blue-600 bg-blue-50 text-blue-700"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+            <details>
+              <summary className="cursor-pointer select-none text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 w-fit">
+                ⚙ PDF Theme: <span className="font-medium capitalize ml-1">{header.theme}</span>
+              </summary>
+              <div className="mt-2 flex gap-3">
+                {(["classic", "minimal", "modern"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set("theme", t)}
+                    className={`flex-1 rounded-lg border-2 py-2 text-sm font-medium capitalize transition-colors ${
+                      header.theme === t
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </details>
           </div>
         </CardContent>
       </Card>
@@ -475,10 +482,10 @@ export default function InvoiceForm({ initialData }: Props) {
                   <div className="col-span-1">
                     <Input
                       type="number"
-                      min="0"
-                      step="0.001"
+                      min="1"
+                      step="1"
                       value={line.quantity}
-                      onChange={(e) => setLine(idx, "quantity", e.target.value)}
+                      onChange={(e) => setLine(idx, "quantity", String(Math.floor(Math.max(1, Number(e.target.value)))))}
                       required
                     />
                   </div>

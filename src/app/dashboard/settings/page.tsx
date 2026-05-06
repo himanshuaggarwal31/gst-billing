@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { INDIAN_STATE_CODES, stateLabel } from "@/lib/gst";
@@ -28,6 +29,12 @@ type Profile = {
   pdf_status_style: "stamp" | "badge" | "none" | null;
   business_email: string | null;
   business_phone: string | null;
+  pdf_theme: "classic" | "minimal" | "modern" | null;
+  pdf_accent_color: string | null;
+  pdf_footer_text: string | null;
+  pdf_terms: string | null;
+  pdf_show_amount_in_words: boolean | null;
+  pdf_print_copies: boolean | null;
 };
 
 type TeamMember = {
@@ -62,6 +69,12 @@ export default function SettingsPage() {
     pdf_status_style: "stamp" as "stamp" | "badge" | "none",
     business_email: "",
     business_phone: "",
+    pdf_theme: "classic" as "classic" | "minimal" | "modern",
+    pdf_accent_color: "",
+    pdf_footer_text: "",
+    pdf_terms: "",
+    pdf_show_amount_in_words: false,
+    pdf_print_copies: false,
   });
 
   useEffect(() => {
@@ -82,6 +95,12 @@ export default function SettingsPage() {
             pdf_status_style: (data.pdf_status_style ?? "stamp") as "stamp" | "badge" | "none",
             business_email: data.business_email ?? "",
             business_phone: data.business_phone ?? "",
+            pdf_theme: (data.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
+            pdf_accent_color: data.pdf_accent_color ?? "",
+            pdf_footer_text: data.pdf_footer_text ?? "",
+            pdf_terms: data.pdf_terms ?? "",
+            pdf_show_amount_in_words: data.pdf_show_amount_in_words ?? false,
+            pdf_print_copies: data.pdf_print_copies ?? false,
           });
         }
       })
@@ -164,8 +183,11 @@ export default function SettingsPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  function setToggle(field: string, value: boolean) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function saveProfile() {
     setSaving(true);
     try {
       const res = await fetch("/api/profile", {
@@ -183,6 +205,12 @@ export default function SettingsPage() {
           pdf_status_style: form.pdf_status_style,
           business_email: form.business_email || null,
           business_phone: form.business_phone || null,
+          pdf_theme: form.pdf_theme,
+          pdf_accent_color: form.pdf_accent_color || null,
+          pdf_footer_text: form.pdf_footer_text || null,
+          pdf_terms: form.pdf_terms || null,
+          pdf_show_amount_in_words: form.pdf_show_amount_in_words,
+          pdf_print_copies: form.pdf_print_copies,
         }),
       });
       const json = await res.json();
@@ -195,6 +223,11 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    await saveProfile();
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -471,6 +504,164 @@ export default function SettingsPage() {
           {team.length === 0 && (
             <p className="text-sm text-muted-foreground">No team members invited yet.</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* PDF Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle>PDF Preferences</CardTitle>
+          <CardDescription>
+            These settings apply to every invoice and quotation PDF. Save your business settings above to apply changes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+
+          {/* Default theme */}
+          <div className="space-y-1.5">
+            <Label>Default PDF Theme</Label>
+            <Select value={form.pdf_theme} onValueChange={(v) => set("pdf_theme", v as "classic" | "minimal" | "modern")}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="classic">Classic (Blue)</SelectItem>
+                <SelectItem value="minimal">Minimal (Monochrome)</SelectItem>
+                <SelectItem value="modern">Modern (Purple)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Used as the default when creating new invoices or quotations. Can be overridden per document.</p>
+          </div>
+
+          {/* Accent colour swatches */}
+          <div className="space-y-1.5">
+            <Label>Brand Accent Colour</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { hex: "#1a56db", label: "Classic Blue" },
+                { hex: "#1d4ed8", label: "Royal Blue" },
+                { hex: "#0ea5e9", label: "Sky Blue" },
+                { hex: "#06b6d4", label: "Cyan" },
+                { hex: "#0f766e", label: "Teal" },
+                { hex: "#10b981", label: "Emerald" },
+                { hex: "#166534", label: "Forest Green" },
+                { hex: "#7c3aed", label: "Violet" },
+                { hex: "#4f46e5", label: "Indigo" },
+                { hex: "#db2777", label: "Pink" },
+                { hex: "#9f1239", label: "Burgundy" },
+                { hex: "#dc2626", label: "Red" },
+                { hex: "#ea580c", label: "Orange" },
+                { hex: "#d97706", label: "Amber" },
+                { hex: "#374151", label: "Slate" },
+                { hex: "#111827", label: "Charcoal" },
+              ].map(({ hex, label }) => (
+                <button
+                  key={hex}
+                  type="button"
+                  title={label}
+                  onClick={() => set("pdf_accent_color", form.pdf_accent_color === hex ? "" : hex)}
+                  className={`w-7 h-7 rounded-full border-2 transition-all ${
+                    form.pdf_accent_color === hex
+                      ? "border-gray-900 scale-110 shadow-md"
+                      : "border-transparent hover:border-gray-400"
+                  }`}
+                  style={{ backgroundColor: hex }}
+                />
+              ))}
+              {form.pdf_accent_color && (
+                <button
+                  type="button"
+                  onClick={() => set("pdf_accent_color", "")}
+                  className="text-xs text-muted-foreground hover:text-foreground underline self-center ml-1"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Overrides the theme&apos;s default colour for header, title, and totals. Leave unset to use the theme default.
+            </p>
+          </div>
+
+          {/* Custom footer text */}
+          <div className="space-y-1.5">
+            <Label htmlFor="pdf_footer_text">PDF Footer Text</Label>
+            <Input
+              id="pdf_footer_text"
+              value={form.pdf_footer_text}
+              onChange={(e) => set("pdf_footer_text", e.target.value)}
+              placeholder="Bank: HDFC | A/C: 1234567890 | IFSC: HDFC0001234"
+              maxLength={200}
+            />
+            <p className="text-xs text-muted-foreground">Appears at the bottom of every PDF. Useful for bank details or UPI ID.</p>
+          </div>
+
+          {/* Terms & Conditions */}
+          <div className="space-y-1.5">
+            <Label htmlFor="pdf_terms">Terms &amp; Conditions</Label>
+            <Textarea
+              id="pdf_terms"
+              value={form.pdf_terms}
+              onChange={(e) => set("pdf_terms", e.target.value)}
+              rows={3}
+              placeholder={"1. Payment due within 30 days.\n2. Goods once sold will not be returned.\n3. Subject to local jurisdiction."}
+            />
+            <p className="text-xs text-muted-foreground">Printed below Notes on every invoice PDF. Leave blank to omit.</p>
+          </div>
+
+          {/* Amount in words */}
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.pdf_show_amount_in_words}
+              onClick={() => setToggle("pdf_show_amount_in_words", !form.pdf_show_amount_in_words)}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-0.5 ${
+                form.pdf_show_amount_in_words ? "bg-blue-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  form.pdf_show_amount_in_words ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <div>
+              <p className="text-sm font-medium leading-none">Amount in Words</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Print total as &ldquo;Rupees One Lakh Twenty Thousand Only&rdquo; below the grand total.</p>
+            </div>
+          </div>
+
+          {/* Print copies */}
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.pdf_print_copies}
+              onClick={() => setToggle("pdf_print_copies", !form.pdf_print_copies)}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-0.5 ${
+                form.pdf_print_copies ? "bg-blue-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  form.pdf_print_copies ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <div>
+              <p className="text-sm font-medium leading-none">Two-Copy PDF (Original + Duplicate)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Each downloaded invoice PDF will contain two pages — <strong>Original for Recipient</strong> and <strong>Duplicate for Supplier</strong> — in a single file, ready to print and split.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <Button type="button" disabled={saving} onClick={saveProfile}>
+              {saving ? "Saving…" : "Save PDF Preferences"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

@@ -31,7 +31,7 @@ export async function GET(
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone")
+      .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
       .eq("id", ownerId)
       .single(),
     supabase
@@ -58,7 +58,11 @@ export async function GET(
     payment_status: invoice.payment_status,
     pdf_status_style: (profile?.pdf_status_style ?? "stamp") as "stamp" | "badge" | "none",
     notes: invoice.notes,
-    theme: invoice.theme ?? "classic",
+    theme: (invoice.theme ?? profile?.pdf_theme ?? "classic") as "classic" | "minimal" | "modern",
+    accent_color: profile?.pdf_accent_color ?? null,
+    footer_text: profile?.pdf_footer_text ?? null,
+    terms: profile?.pdf_terms ?? null,
+    show_amount_in_words: profile?.pdf_show_amount_in_words ?? false,
     seller_state_code: (invoice.seller_state_code as string)?.trim(),
     buyer_state_code: (invoice.buyer_state_code as string)?.trim(),
     is_inter_state: (invoice.seller_state_code as string)?.trim() !== (invoice.buyer_state_code as string)?.trim(),
@@ -94,7 +98,8 @@ export async function GET(
     line_items: invoice.invoice_line_items,
   };
 
-  const buffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData }));
+  const printCopies = profile?.pdf_print_copies ?? false;
+  const buffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData, printCopies }));
 
   return new NextResponse(buffer, {
     status: 200,
