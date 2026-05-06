@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveOwnerId } from "@/lib/resolve-owner";
 import { EWayBillSection } from "@/components/invoice/EWayBillSection";
+import { EInvoiceSection } from "@/components/invoice/EInvoiceSection";
 import { Button } from "@/components/ui/button";
 
 function fmt(n: number) {
@@ -166,6 +167,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
       </div>
+
+      {/* e-Invoice (IRN) */}
+      <EInvoiceSection invoiceId={id} />
 
       {/* e-Way Bill */}
       {hasGoods ? (

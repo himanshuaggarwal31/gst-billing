@@ -41,8 +41,8 @@
 ## 🔴 High Priority — GST Compliance (India-specific)
 
 - [x] #16 GSTR-3B export — monthly summary return (CSV/JSON) for GST portal filing
-- [ ] #17 E-invoice (IRN + QR code) — mandatory for turnover >₹5Cr; IRP API integration
-- [ ] #18 E-way bill generation — required for goods movement >₹50,000; NIC portal API
+- [x] #17 E-invoice (IRN + QR code) — generate NIC JSON for IRP portal; record IRN/ACK/QR; render QR code on invoice detail
+- [x] #18 E-way bill generation — NIC JSON export for ewaybillgst.gov.in; transport details form; record bill number after portal upload
 - [ ] #19 GSTR-2A/2B reconciliation — match your purchase invoices vs supplier-filed data; required for ITC
 - [x] #20 ITC (Input Tax Credit) ledger — running balance of GST claimable from purchase bills
 - [x] #21 HSN/SAC code master — full code list with GST rate mapping, autocomplete on invoice line items
@@ -64,7 +64,7 @@
 ## 🟡 Growth Features — Retention & Stickiness
 
 - [ ] #29 Multiple GSTIN profiles — one login, manage multiple business entities
-- [ ] #30 CSV / Excel import — bulk import clients, products, or historical invoices
+- [x] #30 CSV / Excel import — bulk import clients, products, and historical invoices from CSV with auto-calculated GST totals
 - [ ] #31 Tally export — XML/CSV bridge; most accountants use Tally, this is a dealmaker
 - [ ] #32 Audit trail / activity log — who changed what and when; required for CA review
 - [ ] #33 Stock / inventory tracking — auto-deduct inventory on invoice; for product sellers

@@ -18,6 +18,7 @@ const navItems = [
   { label: "GST Reports", href: "/dashboard/gst-reports" },
   { label: "Aging", href: "/dashboard/reports/aging" },
   { label: "Analytics", href: "/dashboard/analytics" },
+  { label: "Import", href: "/dashboard/import" },
   { label: "Settings", href: "/dashboard/settings" },
 ];
 

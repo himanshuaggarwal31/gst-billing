@@ -64,6 +64,12 @@ One-click CSV export of all invoices in GSTR-1 compatible format (B2B and B2C se
 ### 📋 GSTR-3B Export
 Download a ready-to-file GSTR-3B summary CSV for any month — outward supplies, ITC from expenses, and net GST payable — in one click. Covers Table 3.1 (output tax) and Table 4A (ITC). Works alongside GSTR-1 for complete monthly return filing.
 
+### 🔖 e-Invoice (IRN + QR Code)
+Generate the NIC-format JSON for any invoice and upload it to the IRP portal (einvoice1.gst.gov.in) to get your Invoice Reference Number (IRN). Paste the IRN, Ack No, and Signed QR Code back into the app — the QR code is stored against the invoice for compliance records. Mandatory for businesses with annual turnover > ₹5 Cr; available to all businesses for voluntary use.
+
+### 🚚 e-Way Bill
+Generate the NIC-format JSON for any goods invoice and upload it to ewaybillgst.gov.in to get an e-Way Bill number. Fill in transport details (mode, vehicle number, transporter GSTIN) before downloading. Record the 12-digit e-Way Bill number and validity date once the portal confirms. Required for goods movement exceeding ₹50,000 in value.
+
 ### 🧮 ITC Ledger (Input Tax Credit)
 See exactly how much GST you can claim back from your business expenses each month. The ITC Ledger shows GST collected on invoices, GST paid on purchases, and your net monthly liability — so you never overpay.
 
@@ -79,7 +85,8 @@ Pull up a full transaction history for any client — every invoice raised, ever
 Know who owes you and for how long. The Aging Report groups outstanding invoices into buckets (Current / 1–30 / 31–60 / 61–90 / 90+ days overdue) so your collections team knows where to focus first. Filter to any bucket to see the exact invoices and amounts.
 
 
-See your revenue, expenses, and GST in interactive charts. Track monthly trends, identify your top clients by revenue, and know your net GST liability at a glance — without touching a spreadsheet.
+### 📥 Bulk CSV Import
+Coming from Excel, Tally, or another billing tool? Import all your existing data in one go. Download the ready-made CSV templates for clients, products, and historical invoices — fill them in and upload. GST amounts are calculated automatically from the rates you provide. No more re-entering years of data by hand.
 
 ### �🔄 Recurring Invoices
 Set up a recurring template for your retainer clients. The app auto-generates and sends the invoice on the 1st of every month. Set once, never touch again.
