@@ -9,12 +9,6 @@ export async function GET() {
   if (!user) return NextResponse.json(apiError("Unauthorized", "UNAUTHORIZED"), { status: 401 });
   const { ownerId } = await resolveOwnerId(supabase, user.id, user.email!);
 
-export async function GET() {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json(apiError("Unauthorized", "UNAUTHORIZED"), { status: 401 });
-  const { ownerId } = await resolveOwnerId(supabase, user.id, user.email!);
-
   const [{ data: profile }, { data: last }] = await Promise.all([
     supabase.from("profiles").select("quotation_prefix").eq("id", ownerId).maybeSingle(),
     supabase.from("quotations").select("quote_number").eq("user_id", ownerId)
