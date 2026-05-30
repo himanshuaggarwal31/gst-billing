@@ -25,6 +25,8 @@ const ProfileSchema = z.object({
   pdf_terms: z.string().optional().nullable(),
   pdf_show_amount_in_words: z.boolean().optional().nullable(),
   pdf_print_copies: z.boolean().optional().nullable(),
+  invoice_prefix: z.string().min(1).max(20).optional().nullable(),
+  quotation_prefix: z.string().min(1).max(20).optional().nullable(),
 });
 
 export async function GET() {
@@ -34,7 +36,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_footer_text_invoice, pdf_footer_text_quotation, pdf_footer_text_ewb, pdf_terms, pdf_show_amount_in_words, pdf_print_copies")
+    .select("business_name, gstin, address, city, state_code, pincode, email, phone, pan, logo_url, plan, invoice_count_this_month, pdf_status_style, business_email, business_phone, pdf_theme, pdf_accent_color, pdf_footer_text, pdf_footer_text_invoice, pdf_footer_text_quotation, pdf_footer_text_ewb, pdf_terms, pdf_show_amount_in_words, pdf_print_copies, invoice_prefix, quotation_prefix")
     .eq("id", user.id)
     .single();
 

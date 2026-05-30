@@ -100,9 +100,10 @@ export async function GET(
     footer_text: profile?.pdf_footer_text_ewb ?? profile?.pdf_footer_text ?? null,
   };
 
-  const buffer = await renderToBuffer(createElement(EWayBillPDF, { data: pdfData }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buffer = await renderToBuffer(createElement(EWayBillPDF, { data: pdfData }) as any);
 
-  return new NextResponse(buffer, {
+  return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

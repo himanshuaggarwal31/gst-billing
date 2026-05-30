@@ -41,11 +41,11 @@ export async function GET() {
     "Rate", "Taxable Value", "IGST", "CGST", "SGST/UTGST",
   ]);
 
-  const b2b = invoices?.filter((i) => (i.clients as { gstin: string | null })?.gstin) ?? [];
-  const b2c = invoices?.filter((i) => !(i.clients as { gstin: string | null })?.gstin) ?? [];
+  const b2b = invoices?.filter((i) => (i.clients as unknown as { gstin: string | null })?.gstin) ?? [];
+  const b2c = invoices?.filter((i) => !(i.clients as unknown as { gstin: string | null })?.gstin) ?? [];
 
   for (const inv of b2b) {
-    const client = inv.clients as { name: string; gstin: string | null; state_code: string };
+    const client = inv.clients as unknown as { name: string; gstin: string | null; state_code: string };
     rows.push([
       profile?.gstin ?? "",
       profile?.business_name ?? "",
@@ -75,7 +75,7 @@ export async function GET() {
   ]);
 
   for (const inv of b2c) {
-    const client = inv.clients as { name: string; state_code: string };
+    const client = inv.clients as unknown as { name: string; state_code: string };
     rows.push([
       profile?.gstin ?? "",
       profile?.business_name ?? "",

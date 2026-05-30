@@ -68,7 +68,7 @@ export async function GET() {
   const rows: AgingRow[] = [];
 
   for (const inv of invoices ?? []) {
-    const client = inv.clients as { id: string; name: string } | null;
+    const client = inv.clients as unknown as { id: string; name: string } | null;
     const totalAmount = Number(inv.total_amount);
     const amountPaid = paidMap.get(inv.id) ?? 0;
     const outstanding = Math.max(0, totalAmount - amountPaid);

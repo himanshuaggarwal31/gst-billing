@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { calculateInvoiceTotals } from "@/lib/gst";
 import { resolveOwnerId } from "@/lib/resolve-owner";
-import { PLAN_CONFIG } from "@/lib/plan-config";
+import { requireFeature } from "@/lib/feature-access";
 
 const LineItemSchema = z.object({
   description: z.string().min(1),
@@ -47,8 +47,6 @@ export async function GET() {
   return NextResponse.json(apiSuccess(data));
 }
 
-const FREE_PLAN_INVOICE_LIMIT = PLAN_CONFIG.free.invoicesPerMonth;
-
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,23 +58,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(apiError("Viewers cannot create invoices", "FORBIDDEN"), { status: 403 });
   }
 
-  // Enforce free plan limit against the owner's quota
+  // Check feature access and monthly limit via the unified feature system
+  const guard = await requireFeature(ownerId, "invoices");
+  if (!guard.allowed) return guard.response;
+
+  const monthlyLimit = guard.limits["per_month"] ?? Infinity;
+
+  // Lazy monthly reset: if stored month differs from current month, treat count as 0
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, invoice_count_this_month, invoice_count_reset_month")
+    .select("invoice_count_this_month, invoice_count_reset_month")
     .eq("id", ownerId)
     .single();
 
-  // Lazy monthly reset: if stored month differs from current month, treat count as 0
-  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const currentMonth = new Date().toISOString().slice(0, 7);
   const effectiveCount =
     profile?.invoice_count_reset_month === currentMonth
       ? (profile?.invoice_count_this_month ?? 0)
       : 0;
 
-  if (profile?.plan === "free" && effectiveCount >= FREE_PLAN_INVOICE_LIMIT) {
+  if (monthlyLimit !== Infinity && effectiveCount >= monthlyLimit) {
     return NextResponse.json(
-      apiError("Free plan limit reached. Upgrade to create more invoices.", "LIMIT_REACHED"),
+      apiError(`Monthly invoice limit (${monthlyLimit}) reached. Upgrade to create more.`, "LIMIT_REACHED"),
       { status: 403 }
     );
   }

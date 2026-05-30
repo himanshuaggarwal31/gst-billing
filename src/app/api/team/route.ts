@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const parsed = InviteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      apiError(parsed.error.errors[0].message, "VALIDATION_ERROR"),
+      apiError(parsed.error.issues[0].message, "VALIDATION_ERROR"),
       { status: 400 }
     );
   }

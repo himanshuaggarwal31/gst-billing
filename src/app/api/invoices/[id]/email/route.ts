@@ -169,7 +169,8 @@ export async function POST(
 
   let pdfBuffer: Buffer;
   try {
-    pdfBuffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pdfBuffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData }) as any);
   } catch (pdfErr) {
     console.error("[email] PDF render failed:", pdfErr);
     return NextResponse.json(

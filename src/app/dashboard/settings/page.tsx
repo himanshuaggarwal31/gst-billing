@@ -38,6 +38,8 @@ type Profile = {
   pdf_terms: string | null;
   pdf_show_amount_in_words: boolean | null;
   pdf_print_copies: boolean | null;
+  invoice_prefix: string | null;
+  quotation_prefix: string | null;
 };
 
 type TeamMember = {
@@ -81,6 +83,8 @@ export default function SettingsPage() {
     pdf_terms: "",
     pdf_show_amount_in_words: false,
     pdf_print_copies: false,
+    invoice_prefix: "INV-",
+    quotation_prefix: "QUO-",
   });
 
   useEffect(() => {
@@ -110,6 +114,8 @@ export default function SettingsPage() {
             pdf_terms: data.pdf_terms ?? "",
             pdf_show_amount_in_words: data.pdf_show_amount_in_words ?? false,
             pdf_print_copies: data.pdf_print_copies ?? false,
+            invoice_prefix: data.invoice_prefix ?? "INV-",
+            quotation_prefix: data.quotation_prefix ?? "QUO-",
           });
         }
       })
@@ -454,6 +460,47 @@ export default function SettingsPage() {
               Upgrade (coming soon)
             </Button>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Document Numbering</CardTitle>
+          <CardDescription>
+            Set the prefix used when auto-generating invoice and quotation numbers. The next sequential number is appended automatically — e.g. <strong>{form.invoice_prefix}001</strong>, <strong>{form.quotation_prefix}001</strong>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="invoice_prefix">Invoice Prefix</Label>
+              <Input
+                id="invoice_prefix"
+                value={form.invoice_prefix}
+                onChange={(e) => set("invoice_prefix", e.target.value.toUpperCase())}
+                placeholder="INV-"
+                maxLength={20}
+              />
+              <p className="text-xs text-muted-foreground">e.g. INV-, AINV-, 2025/, FY26-</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="quotation_prefix">Quotation Prefix</Label>
+              <Input
+                id="quotation_prefix"
+                value={form.quotation_prefix}
+                onChange={(e) => set("quotation_prefix", e.target.value.toUpperCase())}
+                placeholder="QUO-"
+                maxLength={20}
+              />
+              <p className="text-xs text-muted-foreground">e.g. QUO-, AUQ-, EST-, PRO-</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Only applies to <strong>new</strong> documents. Existing invoice/quotation numbers are not changed.
+          </p>
+          <Button type="button" disabled={saving} onClick={saveProfile}>
+            {saving ? "Saving…" : "Save Numbering"}
+          </Button>
         </CardContent>
       </Card>
 

@@ -16,6 +16,8 @@ export function apiError(
     | "NOT_FOUND"
     | "INTERNAL_ERROR"
     | "LIMIT_REACHED"
+    | "EMAIL_ERROR"
+    | "CONFLICT"
 ): ApiResponse<never> {
   return { data: null, error: { message, code } };
 }

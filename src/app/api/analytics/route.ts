@@ -64,7 +64,7 @@ export async function GET() {
   // Top 5 clients by total invoiced
   const clientMap = new Map<string, { name: string; total: number; count: number }>();
   for (const inv of invoices) {
-    const name = (inv.clients as { name: string } | null)?.name ?? "Unknown";
+    const name = (inv.clients as unknown as { name: string } | null)?.name ?? "Unknown";
     const id = inv.client_id;
     if (!clientMap.has(id)) clientMap.set(id, { name, total: 0, count: 0 });
     const c = clientMap.get(id)!;

@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
             <BarChart data={monthly} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
+              <Tooltip formatter={(v) => fmt(Number(v ?? 0))} />
               <Legend />
               <Bar dataKey="revenue" name="Revenue" fill="#1a56db" radius={[3, 3, 0, 0]} />
               <Bar dataKey="expenses" name="Expenses" fill="#f59e0b" radius={[3, 3, 0, 0]} />
@@ -143,7 +143,8 @@ export default function AnalyticsPage() {
                   cx="50%"
                   cy="50%"
                   outerRadius={80}
-                  label={({ status, count }) => `${status}: ${count}`}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  label={(props: any) => `${props.status}: ${props.count}`}
                   labelLine={false}
                 >
                   {statusBreakdown.map((entry) => (

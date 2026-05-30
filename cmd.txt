@@ -1,0 +1,58 @@
+# How to Run the GST Billing App
+
+## 1. Next.js App (Main Web App)
+
+### Development mode (with hot reload):
+```
+npm install
+npm run dev
+```
+- Open http://localhost:3000 in your browser.
+
+### Production build:
+```
+npm run build
+npm start
+```
+- Open http://localhost:3000
+
+## 2. Supabase Migrations (Database)
+
+- Run migrations using the Supabase CLI:
+```
+supabase db push
+```
+- Or manually apply SQL files in `supabase/migrations/` via the Supabase SQL Editor.
+
+## 3. Streamlit App (if present)
+
+- If you have a `app.py` or similar Streamlit file:
+```
+streamlit run app.py
+```
+- Open the provided local URL in your browser.
+
+## 4. Linting & Type Checking
+
+- Lint code:
+```
+npm run lint
+```
+- Type check:
+```
+npm run type-check
+```
+
+## 5. Running Tests (if configured)
+
+- Run tests:
+```
+npm test
+```
+
+---
+
+**Note:**
+- Ensure you have Node.js, npm, and Supabase CLI installed.
+- For production, set all required environment variables (see `.env.example`).
+- For Streamlit, ensure Python and required packages are installed (`pip install -r requirements.txt`).
