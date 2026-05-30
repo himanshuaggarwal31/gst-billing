@@ -98,9 +98,9 @@ export async function GET(
     line_items: invoice.invoice_line_items,
   };
 
-  const printCopies = profile?.pdf_print_copies ?? false;
+  const copyLabels = Array.isArray(profile?.pdf_copy_labels) ? (profile.pdf_copy_labels as string[]) : undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData, printCopies }) as any);
+  const buffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData, copyLabels }) as any);
 
   return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,

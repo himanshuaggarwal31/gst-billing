@@ -572,28 +572,25 @@ export function InvoicePDF({
   data,
   documentTitle = "TAX INVOICE",
   documentLabel = "Invoice No.",
-  printCopies = false,
+  copyLabels,
 }: {
   data: InvoicePDFData;
   documentTitle?: string;
   documentLabel?: string;
-  printCopies?: boolean;
+  copyLabels?: string[];
 }) {
-  if (printCopies) {
+  if (copyLabels && copyLabels.length > 0) {
     return (
       <Document>
-        <InvoicePage
-          data={data}
-          documentTitle={documentTitle}
-          documentLabel={documentLabel}
-          copyLabel="ORIGINAL FOR RECIPIENT"
-        />
-        <InvoicePage
-          data={data}
-          documentTitle={documentTitle}
-          documentLabel={documentLabel}
-          copyLabel="DUPLICATE FOR SUPPLIER"
-        />
+        {copyLabels.map((label, i) => (
+          <InvoicePage
+            key={i}
+            data={data}
+            documentTitle={documentTitle}
+            documentLabel={documentLabel}
+            copyLabel={label || undefined}
+          />
+        ))}
       </Document>
     );
   }

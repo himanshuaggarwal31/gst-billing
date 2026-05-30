@@ -88,14 +88,14 @@ export async function GET(
     }),
   };
 
-  const printCopies = (profile?.pdf_print_copies ?? false);
+  const copyLabels = Array.isArray(profile?.pdf_copy_labels) ? (profile.pdf_copy_labels as string[]) : undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(
     createElement(InvoicePDF, {
       data: pdfData,
       documentTitle: "QUOTATION",
       documentLabel: "Quote No.",
-      printCopies,
+      copyLabels,
     }) as any
   );
 
