@@ -43,32 +43,40 @@
 - [x] #16 GSTR-3B export — monthly summary return (CSV/JSON) for GST portal filing
 - [x] #17 E-invoice (IRN + QR code) — generate NIC JSON for IRP portal; record IRN/ACK/QR; IRN/ACK/QR printed on invoice PDF (legally mandatory when generated)
 - [x] #18 E-way bill generation — NIC JSON export for ewaybillgst.gov.in; transport details form; record bill number; separate printable EWB transport PDF
-- [ ] #19 GSTR-2A/2B reconciliation — match your purchase invoices vs supplier-filed data; required for ITC
-- [x] #20 ITC (Input Tax Credit) ledger — running balance of GST claimable from purchase bills
+- [x] #18a Multi-party e-Way Bills — Suppliers directory (triangular supply / dispatch from supplier), Client Branches (multi-GSTIN ship-to), stock transfer (ship to own location); grouped dropdowns in EWB section; DB-enforced mutual exclusivity; NIC transactionType 1–4 auto-derived; all 4 JSON/PDF routes updated
+- [ ] #19 GSTR-2A/2B reconciliation — **moved to 🔴 Market Survival above**- [x] #20 ITC (Input Tax Credit) ledger — running balance of GST claimable from purchase bills
 - [x] #21 HSN/SAC code master — full code list with GST rate mapping, autocomplete on invoice line items
 - [x] PDF branding preferences in Settings — default theme, brand accent colour (16-swatch picker), custom footer text, T&C block, amount in words, two-copy (Original + Duplicate) PDF toggle; theme picker collapsed in forms to save screen space; quantity enforced as whole numbers
+
+---
+
+## � High Priority — Market Survival
+
+> These are the gaps that will cause churn or block adoption. Build these before growth features.
+
+- [ ] #24 Purchase bills recording — log supplier invoices separately for ITC matching and audit; **without this, CA/accountant users cannot use this app for their clients**
+- [ ] #31 Tally export — XML/CSV bridge; **~60% of Indian SMBs run Tally; accountants will reject any tool that can't export to it**
+- [ ] #23 Debit notes — upward revision complement to credit notes; required for returns/corrections on the purchase side
+- [ ] #19 GSTR-2A/2B reconciliation — match your purchase invoices vs supplier-filed data; required for ITC claims; **legally necessary for any GST-registered business**
+- [ ] #33 Stock / inventory tracking — auto-deduct inventory on invoice; **product sellers (the majority of GST filers) need this to avoid selling what they don't have**
 
 ---
 
 ## 🟠 Medium Priority — Business Operations
 
 - [x] #22 Proforma invoice / Quotation — create a quote, convert to invoice in one click
-- [ ] #23 Debit notes — upward revision complement to credit notes
-- [ ] #24 Purchase bills recording — log supplier invoices separately for ITC matching and audit
 - [x] #25 Client statement of accounts — full transaction history per client (invoices, payments, credits)
 - [x] #26 Aging report — 0–30 / 31–60 / 61–90+ days overdue dashboard for collections
 - [x] #27 Delivery challan — goods dispatch document issued before or without an invoice; includes location management (warehouse / project sites), goods movement tracking (warehouse ↔ project ↔ project), returnable/non-returnable challan types, dispatch status lifecycle (Draft → Dispatched → Received → Returned), transport details, printable challan PDF
 - [ ] #28 Invoice approval workflow — Draft → Review → Approved → Sent status chain
+- [ ] #29 Multiple GSTIN profiles — one login, manage multiple business entities
 
 ---
 
 ## 🟡 Growth Features — Retention & Stickiness
 
-- [ ] #29 Multiple GSTIN profiles — one login, manage multiple business entities
 - [x] #30 CSV / Excel import — bulk import clients, products, and historical invoices from CSV with auto-calculated GST totals
-- [ ] #31 Tally export — XML/CSV bridge; most accountants use Tally, this is a dealmaker
 - [ ] #32 Audit trail / activity log — who changed what and when; required for CA review
-- [ ] #33 Stock / inventory tracking — auto-deduct inventory on invoice; for product sellers
 - [ ] #34 OCR receipt scan — photograph paper expense bills; auto-extract amount and GST
 - [ ] #35 In-app notifications — invoice viewed by client, payment overdue, recurring invoice generated
 

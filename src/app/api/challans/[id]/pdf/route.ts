@@ -85,13 +85,15 @@ export async function GET(
     accent_color: profile?.pdf_accent_color ?? null,
   };
 
-  const buffer = await renderToBuffer(createElement(ChallanPDF, { data: pdfData }));
+  const buffer = await renderToBuffer(createElement(ChallanPDF, { data: pdfData }) as any);
 
   const safeNumber = challan.challan_number.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return new NextResponse(buffer, {
+  const safeClient = (challan.clients as { name: string } | null)?.name
+    ?.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "-") ?? "";
+  return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="challan-${safeNumber}.pdf"`,
+      "Content-Disposition": `attachment; filename="challan-${safeNumber}${safeClient ? `-${safeClient}` : ""}.pdf"`,
     },
   });
 }

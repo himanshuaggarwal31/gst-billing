@@ -186,9 +186,9 @@ export default async function PublicInvoicePage({
 
           {/* Actions */}
           <div className="flex justify-center gap-3 pt-4 border-t">
-            <Button asChild>
+            <Button variant="outline" asChild>
               <Link href={`/api/invoice/${token}/pdf`} target="_blank">
-                Download PDF
+                ↓ Download PDF
               </Link>
             </Button>
           </div>

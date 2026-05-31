@@ -67,7 +67,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/api/invoices/${id}/pdf`} target="_blank">PDF</Link>
+            <Link href={`/api/invoices/${id}/pdf`} target="_blank">↓ PDF</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/api/invoices/${id}/eway-bill/pdf`} target="_blank">↓ e-Way Bill PDF</Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/dashboard/invoices/${id}/edit`}>Edit</Link>

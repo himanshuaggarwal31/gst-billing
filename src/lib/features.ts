@@ -22,6 +22,8 @@ export const FEATURE_IDS = [
   "pdf_customization",
   "admin_panel",
   "challans",
+  "suppliers",
+  "client_branches",
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -90,6 +92,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Recurring",     href: "/dashboard/recurring",     feature: "recurring" },
   { label: "Credit Notes",  href: "/dashboard/credit-notes",  feature: "credit_notes" },
   { label: "Challans",      href: "/dashboard/challans",      feature: "challans" },
+  { label: "Suppliers",     href: "/dashboard/suppliers",     feature: "suppliers" },
   { label: "GST Reports",   href: "/dashboard/gst-reports",   feature: "gst_reports" },
   { label: "Aging",         href: "/dashboard/reports/aging", feature: "aging_reports" },
   { label: "Analytics",     href: "/dashboard/analytics",     feature: "analytics" },

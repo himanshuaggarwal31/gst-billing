@@ -148,8 +148,11 @@ export default function ChallanDetailPage() {
             {a.label}
           </Button>
         ))}
-        <Button size="sm" onClick={handleDownloadPDF} disabled={downloading}>
+        <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={downloading}>
           {downloading ? "Generating…" : "↓ Download PDF"}
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/api/challans/${id}/eway-bill/pdf`} target="_blank">↓ e-Way Bill PDF</Link>
         </Button>
         <Button variant="destructive" size="sm" onClick={deleteChallan}>Delete</Button>
       </div>

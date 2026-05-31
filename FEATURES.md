@@ -25,7 +25,13 @@ Download a pixel-perfect, A4-formatted Tax Invoice PDF instantly. Suitable for p
 Send the invoice directly to your client's inbox with one click. The PDF is attached automatically. No more downloading and re-attaching.
 
 ### 👥 Client Management
-Store client details (name, GSTIN, address, state) once. Pick the client when creating an invoice — all fields auto-fill.
+Store client details (name, GSTIN, address, state) once. Pick the client when creating an invoice — all fields auto-fill. Each client has a dedicated detail page where you can manage their **branches** — separate GST registrations in different states under the same company.
+
+### 🏭 Suppliers Directory *(Pro)*
+Maintain a directory of your suppliers for **triangular supply** and **drop-ship** scenarios. When goods are dispatched directly from a supplier's premises to your customer, record the supplier as the "Dispatch From" party in the e-Way Bill. The supplier's GSTIN and address are injected into the NIC JSON automatically.
+
+### 🏢 Client Branches *(Pro)*
+Large clients often have multiple GSTIN registrations across states. Add branches for each registered location. On an e-Way Bill, select the correct branch as the "Ship To" party — the branch's own GSTIN and state code appear in the NIC JSON, ensuring your e-Way Bill reflects the actual delivery point for inter-state GST compliance.
 
 ### 📊 Dashboard
 See your total billed amount, GST collected, and outstanding invoices at a glance. Know your business health without opening a spreadsheet.
@@ -72,6 +78,14 @@ Generate the NIC-format JSON for any invoice and upload it to the IRP portal (ei
 
 ### 🚚 e-Way Bill
 Generate the NIC-format JSON for any goods invoice and upload it to ewaybillgst.gov.in to get an e-Way Bill number. Fill in transport details (mode, vehicle number, transporter GSTIN) before downloading. Record the 12-digit e-Way Bill number and validity date once the portal confirms — then print the separate **e-Way Bill transport document** that the driver carries during transit. Required for goods movement exceeding ₹50,000 in value.
+
+**Full multi-party e-Way Bill support (all 4 NIC transaction types):**
+- **Type 1 — Regular:** Standard sale from your address to buyer's address.
+- **Type 2 — Combination:** Goods dispatched from a different location *and* delivered to a different address.
+- **Type 3 — Dispatch From:** Goods leave from your warehouse or a **supplier's premises** (triangular supply / drop-ship) — managed via the Suppliers directory.
+- **Type 4 — Ship To:** Goods are delivered to a **client's branch** (multi-GSTIN registration in another state) or directly to another client or to your own location (inter-branch **stock transfers**).
+
+The NIC transaction type (1–4) is automatically derived from your selections. Party details (GSTIN, address, state code) are pulled from the respective master record and injected into the NIC JSON. Database-level constraints prevent conflicting selections.
 
 ### 🧮 ITC Ledger (Input Tax Credit)
 See exactly how much GST you can claim back from your business expenses each month. The ITC Ledger shows GST collected on invoices, GST paid on purchases, and your net monthly liability — so you never overpay.

@@ -29,7 +29,14 @@ export async function GET(
       .single(),
     supabase
       .from("eway_bills")
-      .select("*")
+      .select(`
+        *,
+        dispatch_from_location:dispatch_from_location_id(id, name, gstin, address, city, state_code, pincode),
+        dispatch_from_supplier:dispatch_from_supplier_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_client:ship_to_client_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_branch:ship_to_branch_id(id, label, gstin, address, city, state_code, pincode),
+        ship_to_location:ship_to_location_id(id, name, gstin, address, city, state_code, pincode)
+      `)
       .eq("invoice_id", id)
       .eq("user_id", ownerId)
       .maybeSingle(),
@@ -55,12 +62,47 @@ export async function GET(
 
   const sellerStateCode = (profile?.state_code ?? invoice.seller_state_code ?? "0").trim();
   const buyerStateCode  = (client.state_code ?? "0").trim();
-  const isInterState    = sellerStateCode !== buyerStateCode;
 
-  const fromStateCode = parseInt(sellerStateCode, 10) || 0;
-  const toStateCode   = parseInt(buyerStateCode,  10) || 0;
-  const fromPincode   = parseInt(profile?.pincode ?? "0", 10) || 0;
-  const toPincode     = parseInt(client.pincode   ?? "0", 10) || 0;
+  // Resolved FK parties — one of each group wins (priority: first non-null in order)
+  type Party = { name?: string; label?: string; gstin: string | null; address: string | null; city: string | null; state_code: string | null; pincode: string | null } | null;
+
+  const rawDispatchFromLocation = (ewb?.dispatch_from_location as Party) ?? null;
+  const rawDispatchFromSupplier = (ewb?.dispatch_from_supplier as Party) ?? null;
+  const rawShipToClient         = (ewb?.ship_to_client   as Party) ?? null;
+  const rawShipToBranch         = (ewb?.ship_to_branch   as Party) ?? null;
+  const rawShipToLocation       = (ewb?.ship_to_location as Party) ?? null;
+
+  // Normalise: branches use "label" instead of "name"
+  const dispatchFrom: (Party & { name: string }) | null =
+    rawDispatchFromLocation ? { ...rawDispatchFromLocation, name: rawDispatchFromLocation.name ?? "" } :
+    rawDispatchFromSupplier ? { ...rawDispatchFromSupplier, name: rawDispatchFromSupplier.name ?? "" } :
+    null;
+
+  const shipTo: (Party & { name: string }) | null =
+    rawShipToClient   ? { ...rawShipToClient,   name: rawShipToClient.name   ?? "" } :
+    rawShipToBranch   ? { ...rawShipToBranch,   name: rawShipToBranch.label  ?? "" } :
+    rawShipToLocation ? { ...rawShipToLocation, name: rawShipToLocation.name ?? "" } :
+    null;
+
+  const dispatchFromStateCode = dispatchFrom?.state_code ?? sellerStateCode;
+  const shipToStateCode       = shipTo?.state_code       ?? buyerStateCode;
+  const isInterState          = dispatchFromStateCode !== shipToStateCode;
+
+  const fromStateCode    = parseInt(sellerStateCode,        10) || 0;
+  const toStateCode      = parseInt(buyerStateCode,         10) || 0;
+  const actFromStateCode = parseInt(dispatchFromStateCode,  10) || fromStateCode;
+  const actToStateCode   = parseInt(shipToStateCode,        10) || toStateCode;
+  const fromPincode      = parseInt(profile?.pincode        ?? "0", 10) || 0;
+  const toPincode        = parseInt(client.pincode          ?? "0", 10) || 0;
+  const actFromPincode   = parseInt(dispatchFrom?.pincode   ?? String(fromPincode), 10) || fromPincode;
+  const actToPincode     = parseInt(shipTo?.pincode         ?? String(toPincode),   10) || toPincode;
+
+  const hasDiffDispatch = !!dispatchFrom;
+  const hasDiffShipTo   = !!shipTo;
+  const transactionType = hasDiffDispatch && hasDiffShipTo ? 2
+    : hasDiffDispatch ? 3
+    : hasDiffShipTo   ? 4
+    : 1;
 
   const lineItems = (invoice.invoice_line_items as Array<{
     description: string; hsn_sac_code: string;
@@ -100,7 +142,8 @@ export async function GET(
         fromPlace:        profile?.city   || "",
         fromPincode,
         fromStateCode,
-        actFromStateCode: fromStateCode,
+        actFromStateCode,
+        actFromPincode,
 
         toGstin:          client.gstin || "URP",
         toTrdName:        client.name,
@@ -109,7 +152,32 @@ export async function GET(
         toPlace:          client.city   || "",
         toPincode,
         toStateCode,
-        actToStateCode:   toStateCode,
+        actToStateCode,
+        actToPincode,
+
+        // Dispatch From (only when a location is selected)
+        ...(dispatchFrom ? {
+          dispatchFromGstin:      dispatchFrom.gstin   || "URP",
+          dispatchFromTrdName:    dispatchFrom.name,
+          dispatchFromAddr1:      dispatchFrom.address || "",
+          dispatchFromAddr2:      "",
+          dispatchFromPlace:      dispatchFrom.city    || "",
+          dispatchFromPincode:    actFromPincode,
+          dispatchFromStateCode:  actFromStateCode,
+        } : {}),
+
+        // Ship To (only when a client is selected)
+        ...(shipTo ? {
+          shipToGstin:            shipTo.gstin   || "URP",
+          shipToTrdName:          shipTo.name,
+          shipToAddr1:            shipTo.address || "",
+          shipToAddr2:            "",
+          shipToPlace:            shipTo.city    || "",
+          shipToPincode:          actToPincode,
+          shipToStateCode:        actToStateCode,
+        } : {}),
+
+        transactionType,
 
         totalValue:       invoice.taxable_amount,
         cgstValue:        invoice.total_cgst,

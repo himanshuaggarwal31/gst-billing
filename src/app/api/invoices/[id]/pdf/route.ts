@@ -102,11 +102,13 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(createElement(InvoicePDF, { data: pdfData, copyLabels }) as any);
 
+  const safeClient = (invoice.clients as { name: string })?.name
+    ?.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "-") ?? "";
   return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="invoice-${invoice.invoice_number}.pdf"`,
+      "Content-Disposition": `attachment; filename="invoice-${invoice.invoice_number}${safeClient ? `-${safeClient}` : ""}.pdf"`,
     },
   });
 }

@@ -24,7 +24,14 @@ export async function GET(
       .single(),
     supabase
       .from("eway_bills")
-      .select("*")
+      .select(`
+        *,
+        dispatch_from_location:dispatch_from_location_id(id, name, gstin, address, city, state_code, pincode),
+        dispatch_from_supplier:dispatch_from_supplier_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_client:ship_to_client_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_branch:ship_to_branch_id(id, label, gstin, address, city, state_code, pincode),
+        ship_to_location:ship_to_location_id(id, name, gstin, address, city, state_code, pincode)
+      `)
       .eq("challan_id", id)
       .eq("user_id", ownerId)
       .maybeSingle(),
@@ -54,7 +61,7 @@ export async function GET(
   const toGstin      = client?.gstin      ?? null;
   const toAddr       = client?.address    ?? toLocation?.address ?? null;
   const toCity       = client?.city       ?? null;
-  const toStateCode  = client?.state_code ?? toLocation?.state_code ?? profile?.state_code ?? "00";
+  const toStateCode  = client?.state_code ?? profile?.state_code ?? "00";
   const toPincode    = client?.pincode    ?? null;
 
   const sortedItems = ([...(challan.challan_items as Array<{
@@ -111,6 +118,24 @@ export async function GET(
       taxable_amount: 0,
       line_total:     0,
     })),
+    dispatch_from: (() => {
+      type P = { name?: string; label?: string; gstin: string | null; address: string | null; city: string | null; state_code: string | null; pincode: string | null } | null;
+      const loc = (ewb?.dispatch_from_location as P) ?? null;
+      const sup = (ewb?.dispatch_from_supplier as P) ?? null;
+      const raw = loc ?? sup;
+      if (!raw) return null;
+      return { name: raw.name ?? "", gstin: raw.gstin ?? null, addr: raw.address ?? null, city: raw.city ?? null, state: raw.state_code ?? null, pincode: raw.pincode ?? null };
+    })(),
+    ship_to: (() => {
+      type P = { name?: string; label?: string; gstin: string | null; address: string | null; city: string | null; state_code: string | null; pincode: string | null } | null;
+      const cli = (ewb?.ship_to_client   as P) ?? null;
+      const brn = (ewb?.ship_to_branch   as P) ?? null;
+      const sloc= (ewb?.ship_to_location as P) ?? null;
+      const raw = cli ?? brn ?? sloc;
+      if (!raw) return null;
+      const name = cli ? (cli.name ?? "") : brn ? (brn.label ?? "") : (sloc?.name ?? "");
+      return { name, gstin: raw.gstin ?? null, addr: raw.address ?? null, city: raw.city ?? null, state: raw.state_code ?? null, pincode: raw.pincode ?? null };
+    })(),
     accent_color:         profile?.pdf_accent_color           ?? null,
     pdf_theme:            profile?.pdf_theme                  ?? null,
     show_amount_in_words: profile?.pdf_show_amount_in_words   ?? false,
@@ -119,13 +144,15 @@ export async function GET(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buffer = await renderToBuffer(createElement(EWayBillPDF, { data: pdfData }) as any);
-  const safe   = challan.challan_number.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const safe       = challan.challan_number.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const safeClient = (challan.clients as { name: string } | null)?.name
+    ?.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "-") ?? "";
 
   return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="ewb-${safe}.pdf"`,
+      "Content-Disposition": `attachment; filename="ewb-${safe}${safeClient ? `-${safeClient}` : ""}.pdf"`,
     },
   });
 }

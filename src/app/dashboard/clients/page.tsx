@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -280,6 +281,13 @@ export default function ClientsPage() {
                   <TableCell className="text-sm">{client.phone ?? "—"}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                      >
+                        <Link href={`/dashboard/clients/${client.id}`}>Branches</Link>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

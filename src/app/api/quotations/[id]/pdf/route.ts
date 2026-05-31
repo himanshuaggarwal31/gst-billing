@@ -99,11 +99,13 @@ export async function GET(
     }) as any
   );
 
+  const safeClient = (quote.clients as { name: string })?.name
+    ?.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "-") ?? "";
   return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="quotation-${quote.quote_number}.pdf"`,
+      "Content-Disposition": `attachment; filename="quotation-${quote.quote_number}${safeClient ? `-${safeClient}` : ""}.pdf"`,
     },
   });
 }

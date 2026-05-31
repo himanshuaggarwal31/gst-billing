@@ -28,7 +28,14 @@ export async function GET(
       .single(),
     supabase
       .from("eway_bills")
-      .select("*")
+      .select(`
+        *,
+        dispatch_from_location:dispatch_from_location_id(id, name, gstin, address, city, state_code, pincode),
+        dispatch_from_supplier:dispatch_from_supplier_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_client:ship_to_client_id(id, name, gstin, address, city, state_code, pincode),
+        ship_to_branch:ship_to_branch_id(id, label, gstin, address, city, state_code, pincode),
+        ship_to_location:ship_to_location_id(id, name, gstin, address, city, state_code, pincode)
+      `)
       .eq("challan_id", id)
       .eq("user_id", ownerId)
       .maybeSingle(),
@@ -58,6 +65,38 @@ export async function GET(
   const toCity       = client?.city        ?? "";
   const toStateCode  = parseInt(client?.state_code ?? fromStateCode.toString(), 10) || fromStateCode;
   const toPincode    = parseInt(client?.pincode    ?? "0", 10) || 0;
+
+  // Resolved FK parties — one of each group wins
+  type Party = { name?: string; label?: string; gstin: string | null; address: string | null; city: string | null; state_code: string | null; pincode: string | null } | null;
+
+  const rawDispatchFromLocation = (ewb?.dispatch_from_location as Party) ?? null;
+  const rawDispatchFromSupplier = (ewb?.dispatch_from_supplier as Party) ?? null;
+  const rawShipToClient         = (ewb?.ship_to_client   as Party) ?? null;
+  const rawShipToBranch         = (ewb?.ship_to_branch   as Party) ?? null;
+  const rawShipToLocation       = (ewb?.ship_to_location as Party) ?? null;
+
+  const dispatchFrom: (Party & { name: string }) | null =
+    rawDispatchFromLocation ? { ...rawDispatchFromLocation, name: rawDispatchFromLocation.name ?? "" } :
+    rawDispatchFromSupplier ? { ...rawDispatchFromSupplier, name: rawDispatchFromSupplier.name ?? "" } :
+    null;
+
+  const shipTo: (Party & { name: string }) | null =
+    rawShipToClient   ? { ...rawShipToClient,   name: rawShipToClient.name   ?? "" } :
+    rawShipToBranch   ? { ...rawShipToBranch,   name: rawShipToBranch.label  ?? "" } :
+    rawShipToLocation ? { ...rawShipToLocation, name: rawShipToLocation.name ?? "" } :
+    null;
+
+  const actFromStateCode = parseInt(dispatchFrom?.state_code ?? fromStateCode.toString(), 10) || fromStateCode;
+  const actToStateCode   = parseInt(shipTo?.state_code       ?? toStateCode.toString(),   10) || toStateCode;
+  const actFromPincode   = parseInt(dispatchFrom?.pincode    ?? fromPincode.toString(),   10) || fromPincode;
+  const actToPincode     = parseInt(shipTo?.pincode          ?? toPincode.toString(),     10) || toPincode;
+
+  const hasDiffDispatch  = !!dispatchFrom;
+  const hasDiffShipTo    = !!shipTo;
+  const transactionType  = hasDiffDispatch && hasDiffShipTo ? 2
+    : hasDiffDispatch ? 3
+    : hasDiffShipTo   ? 4
+    : 1;
 
   const items = (challan.challan_items as Array<{
     description: string; hsn_sac_code: string; quantity: number; unit: string; sort_order: number;
@@ -99,7 +138,8 @@ export async function GET(
         fromPlace:        profile?.city   || "",
         fromPincode,
         fromStateCode,
-        actFromStateCode: fromStateCode,
+        actFromStateCode,
+        actFromPincode,
 
         toGstin:          toGstin,
         toTrdName:        toName,
@@ -108,7 +148,32 @@ export async function GET(
         toPlace:          toCity,
         toPincode,
         toStateCode,
-        actToStateCode:   toStateCode,
+        actToStateCode,
+        actToPincode,
+
+        // Dispatch From (only when a location is selected)
+        ...(dispatchFrom ? {
+          dispatchFromGstin:      dispatchFrom.gstin   || "URP",
+          dispatchFromTrdName:    dispatchFrom.name,
+          dispatchFromAddr1:      dispatchFrom.address || "",
+          dispatchFromAddr2:      "",
+          dispatchFromPlace:      dispatchFrom.city    || "",
+          dispatchFromPincode:    actFromPincode,
+          dispatchFromStateCode:  actFromStateCode,
+        } : {}),
+
+        // Ship To (only when a client is selected)
+        ...(shipTo ? {
+          shipToGstin:            shipTo.gstin   || "URP",
+          shipToTrdName:          shipTo.name,
+          shipToAddr1:            shipTo.address || "",
+          shipToAddr2:            "",
+          shipToPlace:            shipTo.city    || "",
+          shipToPincode:          actToPincode,
+          shipToStateCode:        actToStateCode,
+        } : {}),
+
+        transactionType,
 
         totalValue:       0,
         cgstValue:        0,

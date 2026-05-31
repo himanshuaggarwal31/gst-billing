@@ -17,7 +17,25 @@ const EWayBillSchema = z.object({
   trans_doc_date:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   eway_bill_number: z.string().optional().nullable(),
   valid_until:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-});
+  // Bill-To / Ship-To (FK references)
+  // Dispatch From: at most one of these should be set
+  dispatch_from_location_id: z.string().uuid().optional().nullable(),
+  dispatch_from_supplier_id: z.string().uuid().optional().nullable(),
+  // Ship To: at most one of these should be set
+  ship_to_client_id:         z.string().uuid().optional().nullable(),
+  ship_to_branch_id:         z.string().uuid().optional().nullable(),
+  ship_to_location_id:       z.string().uuid().optional().nullable(),
+}).refine(
+  (d) => (
+    [d.dispatch_from_location_id, d.dispatch_from_supplier_id].filter(Boolean).length <= 1
+  ),
+  { message: "Only one Dispatch From source can be set at a time" }
+).refine(
+  (d) => (
+    [d.ship_to_client_id, d.ship_to_branch_id, d.ship_to_location_id].filter(Boolean).length <= 1
+  ),
+  { message: "Only one Ship To destination can be set at a time" }
+);
 
 export async function GET(
   _req: NextRequest,
@@ -106,18 +124,37 @@ export async function POST(
     .eq("user_id", ownerId)
     .maybeSingle();
 
+  // Extract party FK fields separately — only include them when non-null so the route
+  // works even before the multi-party migrations have been run on the DB.
+  const {
+    dispatch_from_location_id,
+    dispatch_from_supplier_id,
+    ship_to_client_id,
+    ship_to_branch_id,
+    ship_to_location_id,
+    ...coreData
+  } = parsed.data;
+
+  const partyFields = {
+    ...(dispatch_from_location_id != null ? { dispatch_from_location_id } : {}),
+    ...(dispatch_from_supplier_id  != null ? { dispatch_from_supplier_id }  : {}),
+    ...(ship_to_client_id          != null ? { ship_to_client_id }          : {}),
+    ...(ship_to_branch_id          != null ? { ship_to_branch_id }          : {}),
+    ...(ship_to_location_id        != null ? { ship_to_location_id }        : {}),
+  };
+
   let data, error;
   if (existing) {
     ({ data, error } = await supabase
       .from("eway_bills")
-      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .update({ ...coreData, ...partyFields, updated_at: new Date().toISOString() })
       .eq("id", existing.id)
       .select()
       .single());
   } else {
     ({ data, error } = await supabase
       .from("eway_bills")
-      .insert({ challan_id: id, user_id: ownerId, ...parsed.data })
+      .insert({ challan_id: id, user_id: ownerId, ...coreData, ...partyFields })
       .select()
       .single());
   }

@@ -163,7 +163,7 @@ export function EInvoiceSection({ invoiceId }: { invoiceId: string }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
             Step 1 — Download &amp; Upload to IRP Portal
           </p>
-          <Button onClick={handleDownloadJson} disabled={downloading} variant="outline">
+          <Button variant="outline" onClick={handleDownloadJson} disabled={downloading}>
             {downloading ? "Generating…" : "↓ Download NIC JSON"}
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
@@ -232,8 +232,8 @@ export function EInvoiceSection({ invoiceId }: { invoiceId: string }) {
           )}
 
           <div className="flex gap-3 mt-4">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save e-Invoice Details"}
+            <Button variant="outline" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save Details"}
             </Button>
           </div>
         </div>

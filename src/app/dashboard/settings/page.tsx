@@ -14,11 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { PLAN_CONFIG } from "@/lib/plan-config";
 
 const TABS = [
-  { id: "business", label: "Business" },
-  { id: "pdf",      label: "PDF"      },
-  { id: "numbering",label: "Numbering"},
-  { id: "team",     label: "Team"     },
-  { id: "plan",     label: "Plan"     },
+  { id: "business",  label: "Business"  },
+  { id: "pdf",       label: "PDF"       },
+  { id: "numbering", label: "Numbering" },
+  { id: "team",      label: "Team"      },
+  { id: "plan",      label: "Plan"      },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -811,7 +811,6 @@ export default function SettingsPage() {
           </>
         )}
 
-        {/* â”€â”€ PLAN TAB â”€â”€ */}
         {activeTab === "plan" && (
           <>
             <div>

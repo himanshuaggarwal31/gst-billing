@@ -214,6 +214,22 @@ export type EWayBillPDFData = {
     taxable_amount: number;
     line_total: number;
   }>;
+  dispatch_from?: {
+    name: string;
+    gstin?: string | null;
+    addr?: string | null;
+    city?: string | null;
+    state?: string | null;
+    pincode?: string | null;
+  } | null;
+  ship_to?: {
+    name: string;
+    gstin?: string | null;
+    addr?: string | null;
+    city?: string | null;
+    state?: string | null;
+    pincode?: string | null;
+  } | null;
 };
 
 const TRANSPORT_MODE_LABELS: Record<string, string> = {
@@ -274,12 +290,12 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
             <Text style={styles.docRefValue}>{ewb.supply_type === "O" ? "Outward" : "Inward"}</Text>
           </View>
           <View style={styles.docRefCell}>
-            <Text style={styles.docRefLabel}>Transaction Type</Text>
+            <Text style={styles.docRefLabel}>GST Type</Text>
             <Text style={styles.docRefValue}>{data.is_inter_state ? "Inter-State (IGST)" : "Intra-State (CGST+SGST)"}</Text>
           </View>
         </View>
 
-        {/* From / To */}
+        {/* From / To (+ optional Dispatch From / Ship To) */}
         <Text style={styles.sectionTitle}>Consignor / Consignee</Text>
         <View style={styles.partiesRow}>
           <View style={styles.partyBox}>
@@ -309,6 +325,42 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
             <Text style={styles.partyDetail}>State: {stateLabel(data.client.state_code)}</Text>
           </View>
         </View>
+        {(data.dispatch_from?.name || data.ship_to?.name) && (
+          <View style={[styles.partiesRow, { marginTop: 6 }]}>
+            {data.dispatch_from?.name ? (
+              <View style={[styles.partyBox, { borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }]}>
+                <Text style={[styles.partyLabel, { color: "#3b82f6" }]}>Dispatch From (Actual)</Text>
+                <Text style={styles.partyName}>{data.dispatch_from.name}</Text>
+                {data.dispatch_from.gstin && <Text style={styles.partyDetail}>GSTIN: {data.dispatch_from.gstin}</Text>}
+                {data.dispatch_from.addr  && <Text style={styles.partyDetail}>{data.dispatch_from.addr}</Text>}
+                {(data.dispatch_from.city || data.dispatch_from.pincode) && (
+                  <Text style={styles.partyDetail}>
+                    {[data.dispatch_from.city, data.dispatch_from.pincode].filter(Boolean).join(" – ")}
+                  </Text>
+                )}
+                {data.dispatch_from.state && (
+                  <Text style={styles.partyDetail}>State: {stateLabel(data.dispatch_from.state)}</Text>
+                )}
+              </View>
+            ) : <View style={{ flex: 1 }} />}
+            {data.ship_to?.name ? (
+              <View style={[styles.partyBox, { borderColor: "#bbf7d0", backgroundColor: "#f0fdf4" }]}>
+                <Text style={[styles.partyLabel, { color: "#16a34a" }]}>Ship To (Actual Delivery)</Text>
+                <Text style={styles.partyName}>{data.ship_to.name}</Text>
+                {data.ship_to.gstin && <Text style={styles.partyDetail}>GSTIN: {data.ship_to.gstin}</Text>}
+                {data.ship_to.addr  && <Text style={styles.partyDetail}>{data.ship_to.addr}</Text>}
+                {(data.ship_to.city || data.ship_to.pincode) && (
+                  <Text style={styles.partyDetail}>
+                    {[data.ship_to.city, data.ship_to.pincode].filter(Boolean).join(" – ")}
+                  </Text>
+                )}
+                {data.ship_to.state && (
+                  <Text style={styles.partyDetail}>State: {stateLabel(data.ship_to.state)}</Text>
+                )}
+              </View>
+            ) : <View style={{ flex: 1 }} />}
+          </View>
+        )}
 
         {/* Transport details — unified box */}
         <View style={[styles.transportBox, { marginTop: 12 }]}>
