@@ -76,28 +76,45 @@ export type NavItem = {
   href: string;
   feature?: FeatureId;       // if set, item is hidden when feature is not accessible
   adminOnly?: boolean;       // if true, only visible to super admins
+  group?: string;            // if set, item is rendered inside a dropdown group
 };
 
 /**
- * Full navigation definition — single source of truth for sidebar.
- * The `feature` field is matched against the user's FeatureAccessMap.
+ * Ordered list of dropdown group names shown in the nav.
+ */
+export const NAV_GROUP_ORDER = ["Sales", "Operations", "Finance", "Compliance"] as const;
+export type NavGroup = (typeof NAV_GROUP_ORDER)[number];
+
+/**
+ * Full navigation definition — single source of truth for nav bar.
+ * Items with a `group` are rendered inside a dropdown; others are standalone links.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard",     href: "/dashboard" },
-  { label: "Invoices",      href: "/dashboard/invoices",      feature: "invoices" },
-  { label: "Quotations",    href: "/dashboard/quotations",    feature: "quotations" },
-  { label: "Clients",       href: "/dashboard/clients",       feature: "clients" },
-  { label: "Products",      href: "/dashboard/products",      feature: "products" },
-  { label: "Expenses",      href: "/dashboard/expenses",      feature: "expenses" },
-  { label: "Recurring",     href: "/dashboard/recurring",     feature: "recurring" },
-  { label: "Credit Notes",  href: "/dashboard/credit-notes",  feature: "credit_notes" },
-  { label: "Challans",      href: "/dashboard/challans",      feature: "challans" },
-  { label: "Suppliers",     href: "/dashboard/suppliers",     feature: "suppliers" },
-  { label: "GST Reports",   href: "/dashboard/gst-reports",   feature: "gst_reports" },
-  { label: "Aging",         href: "/dashboard/reports/aging", feature: "aging_reports" },
-  { label: "Analytics",     href: "/dashboard/analytics",     feature: "analytics" },
-  { label: "Import",        href: "/dashboard/import",        feature: "import" },
-  { label: "Team",          href: "/dashboard/team",          feature: "team" },
-  { label: "Settings",      href: "/dashboard/settings" },
-  { label: "Admin",         href: "/dashboard/admin",         adminOnly: true },
+  { label: "Dashboard",    href: "/dashboard" },
+
+  // Sales group
+  { label: "Invoices",     href: "/dashboard/invoices",      feature: "invoices",      group: "Sales" },
+  { label: "Quotations",   href: "/dashboard/quotations",    feature: "quotations",    group: "Sales" },
+  { label: "Recurring",    href: "/dashboard/recurring",     feature: "recurring",     group: "Sales" },
+  { label: "Credit Notes", href: "/dashboard/credit-notes",  feature: "credit_notes",  group: "Sales" },
+
+  // Operations group
+  { label: "Clients",      href: "/dashboard/clients",       feature: "clients",       group: "Operations" },
+  { label: "Products",     href: "/dashboard/products",      feature: "products",      group: "Operations" },
+  { label: "Challans",     href: "/dashboard/challans",      feature: "challans",      group: "Operations" },
+  { label: "Suppliers",    href: "/dashboard/suppliers",     feature: "suppliers",     group: "Operations" },
+
+  // Finance group
+  { label: "Expenses",     href: "/dashboard/expenses",      feature: "expenses",      group: "Finance" },
+  { label: "Aging",        href: "/dashboard/reports/aging", feature: "aging_reports", group: "Finance" },
+
+  // Compliance group
+  { label: "GST Reports",  href: "/dashboard/gst-reports",   feature: "gst_reports",   group: "Compliance" },
+  { label: "Analytics",    href: "/dashboard/analytics",     feature: "analytics",     group: "Compliance" },
+
+  // Standalone
+  { label: "Import",       href: "/dashboard/import",        feature: "import" },
+  { label: "Team",         href: "/dashboard/team",          feature: "team" },
+  { label: "Settings",     href: "/dashboard/settings" },
+  { label: "Admin",        href: "/dashboard/admin",         adminOnly: true },
 ];

@@ -66,6 +66,7 @@ export default function ChallanDetailPage() {
   const [challan, setChallan] = useState<ChallanDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [tab, setTab] = useState<"details" | "ewb">("details");
 
   async function fetchChallan() {
     setLoading(true);
@@ -157,143 +158,164 @@ export default function ChallanDetailPage() {
         <Button variant="destructive" size="sm" onClick={deleteChallan}>Delete</Button>
       </div>
 
-      {/* Challan Card */}
-      <div className="rounded-xl border bg-white shadow-sm">
-        <div className="p-5 border-b flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold font-mono">{challan.challan_number}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {TYPE_LABEL[challan.challan_type]} &middot;{" "}
-              {new Date(challan.challan_date).toLocaleDateString("en-IN", {
-                day: "numeric", month: "long", year: "numeric",
-              })}
-            </p>
-          </div>
-          <div className="text-right space-y-1">
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.color}`}>
-              {statusMeta.label}
-            </span>
-            <p className="text-xs text-muted-foreground">
-              {challan.returnable_type === "returnable" ? "✅ Returnable" : "Non-returnable"}
-            </p>
-          </div>
-        </div>
-
-        <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 border-b">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">From</p>
-            <p className="text-sm font-medium mt-0.5">
-              {challan.from_location?.name ?? challan.from_location_name ?? "—"}
-            </p>
-            {challan.from_location?.address && (
-              <p className="text-xs text-muted-foreground">{challan.from_location.address}</p>
-            )}
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">To</p>
-            <p className="text-sm font-medium mt-0.5">
-              {challan.to_location?.name ?? challan.to_location_name ?? "—"}
-            </p>
-            {challan.to_location?.address && (
-              <p className="text-xs text-muted-foreground">{challan.to_location.address}</p>
-            )}
-          </div>
-          {challan.clients && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client</p>
-              <p className="text-sm font-medium mt-0.5">{challan.clients.name}</p>
-              {challan.clients.gstin && (
-                <p className="text-xs text-muted-foreground font-mono">{challan.clients.gstin}</p>
-              )}
-            </div>
-          )}
-          {challan.vehicle_number && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vehicle</p>
-              <p className="text-sm font-medium font-mono mt-0.5">{challan.vehicle_number?.toUpperCase()}</p>
-            </div>
-          )}
-          {challan.driver_name && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Driver</p>
-              <p className="text-sm mt-0.5">{challan.driver_name}</p>
-            </div>
-          )}
-          {challan.transporter_name && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Transporter</p>
-              <p className="text-sm mt-0.5">{challan.transporter_name}</p>
-            </div>
-          )}
-          {challan.eway_bill_number && (
-            <div className="col-span-2 sm:col-span-3 bg-blue-50 rounded-lg px-4 py-3 border border-blue-200">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">e-Way Bill</p>
-              <p className="text-base font-bold font-mono text-blue-800 mt-0.5">{challan.eway_bill_number}</p>
-              {challan.eway_bill_valid_until && (
-                <p className="text-xs text-blue-600 mt-0.5">
-                  Valid until: {new Date(challan.eway_bill_valid_until).toLocaleDateString("en-IN")}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Items table */}
-        <div className="p-5">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">#</th>
-                <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">Description</th>
-                <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">HSN / SAC</th>
-                <th className="text-right py-2 font-medium text-muted-foreground text-xs uppercase">Qty</th>
-                <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase pl-2">Unit</th>
-                <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase pl-2">Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedItems.map((item, i) => (
-                <tr key={item.id} className="border-b last:border-0">
-                  <td className="py-2 text-muted-foreground">{i + 1}</td>
-                  <td className="py-2 font-medium">{item.description}</td>
-                  <td className="py-2 font-mono text-xs text-muted-foreground">{item.hsn_sac_code || "—"}</td>
-                  <td className="py-2 text-right tabular-nums">{item.quantity}</td>
-                  <td className="py-2 pl-2 text-muted-foreground">{item.unit}</td>
-                  <td className="py-2 pl-2 text-muted-foreground text-xs">{item.remarks || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {challan.notes && (
-          <div className="px-5 pb-5">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
-            <p className="text-sm whitespace-pre-wrap">{challan.notes}</p>
-          </div>
-        )}
-
-        {/* Timeline */}
-        {(challan.dispatched_at || challan.received_at || challan.returned_at) && (
-          <div className="px-5 pb-5 border-t pt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Timeline</p>
-            <div className="space-y-1 text-sm">
-              {challan.dispatched_at && (
-                <p>📤 Dispatched: {new Date(challan.dispatched_at).toLocaleString("en-IN")}</p>
-              )}
-              {challan.received_at && (
-                <p>📥 Received: {new Date(challan.received_at).toLocaleString("en-IN")}</p>
-              )}
-              {challan.returned_at && (
-                <p>🔄 Returned: {new Date(challan.returned_at).toLocaleString("en-IN")}</p>
-              )}
-            </div>
-          </div>
-        )}
+      {/* Tab bar */}
+      <div className="border-b flex">
+        {(["details", "ewb"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === t
+                ? "border-gray-900 text-gray-900"
+                : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
+            }`}
+          >
+            {t === "details" ? "Details" : "e-Way Bill"}
+          </button>
+        ))}
       </div>
 
-      {/* Unified e-Way Bill Section */}
-      <EWayBillSection apiBase={`/api/challans/${id}`} subSupplyDefault={10} />
+      {/* Details tab */}
+      {tab === "details" && (
+        <div className="rounded-xl border bg-white shadow-sm">
+          <div className="p-5 border-b flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold font-mono">{challan.challan_number}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {TYPE_LABEL[challan.challan_type]} &middot;{" "}
+                {new Date(challan.challan_date).toLocaleDateString("en-IN", {
+                  day: "numeric", month: "long", year: "numeric",
+                })}
+              </p>
+            </div>
+            <div className="text-right space-y-1">
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.color}`}>
+                {statusMeta.label}
+              </span>
+              <p className="text-xs text-muted-foreground">
+                {challan.returnable_type === "returnable" ? "✅ Returnable" : "Non-returnable"}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 border-b">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">From</p>
+              <p className="text-sm font-medium mt-0.5">
+                {challan.from_location?.name ?? challan.from_location_name ?? "—"}
+              </p>
+              {challan.from_location?.address && (
+                <p className="text-xs text-muted-foreground">{challan.from_location.address}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">To</p>
+              <p className="text-sm font-medium mt-0.5">
+                {challan.to_location?.name ?? challan.to_location_name ?? "—"}
+              </p>
+              {challan.to_location?.address && (
+                <p className="text-xs text-muted-foreground">{challan.to_location.address}</p>
+              )}
+            </div>
+            {challan.clients && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client</p>
+                <p className="text-sm font-medium mt-0.5">{challan.clients.name}</p>
+                {challan.clients.gstin && (
+                  <p className="text-xs text-muted-foreground font-mono">{challan.clients.gstin}</p>
+                )}
+              </div>
+            )}
+            {challan.vehicle_number && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vehicle</p>
+                <p className="text-sm font-medium font-mono mt-0.5">{challan.vehicle_number?.toUpperCase()}</p>
+              </div>
+            )}
+            {challan.driver_name && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Driver</p>
+                <p className="text-sm mt-0.5">{challan.driver_name}</p>
+              </div>
+            )}
+            {challan.transporter_name && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Transporter</p>
+                <p className="text-sm mt-0.5">{challan.transporter_name}</p>
+              </div>
+            )}
+            {challan.eway_bill_number && (
+              <div className="col-span-2 sm:col-span-3 bg-blue-50 rounded-lg px-4 py-3 border border-blue-200">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">e-Way Bill</p>
+                <p className="text-base font-bold font-mono text-blue-800 mt-0.5">{challan.eway_bill_number}</p>
+                {challan.eway_bill_valid_until && (
+                  <p className="text-xs text-blue-600 mt-0.5">
+                    Valid until: {new Date(challan.eway_bill_valid_until).toLocaleDateString("en-IN")}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Items table */}
+          <div className="p-5">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">#</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">Description</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase">HSN / SAC</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground text-xs uppercase">Qty</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase pl-2">Unit</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground text-xs uppercase pl-2">Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedItems.map((item, i) => (
+                  <tr key={item.id} className="border-b last:border-0">
+                    <td className="py-2 text-muted-foreground">{i + 1}</td>
+                    <td className="py-2 font-medium">{item.description}</td>
+                    <td className="py-2 font-mono text-xs text-muted-foreground">{item.hsn_sac_code || "—"}</td>
+                    <td className="py-2 text-right tabular-nums">{item.quantity}</td>
+                    <td className="py-2 pl-2 text-muted-foreground">{item.unit}</td>
+                    <td className="py-2 pl-2 text-muted-foreground text-xs">{item.remarks || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {challan.notes && (
+            <div className="px-5 pb-5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+              <p className="text-sm whitespace-pre-wrap">{challan.notes}</p>
+            </div>
+          )}
+
+          {/* Timeline */}
+          {(challan.dispatched_at || challan.received_at || challan.returned_at) && (
+            <div className="px-5 pb-5 border-t pt-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Timeline</p>
+              <div className="space-y-1 text-sm">
+                {challan.dispatched_at && (
+                  <p>📤 Dispatched: {new Date(challan.dispatched_at).toLocaleString("en-IN")}</p>
+                )}
+                {challan.received_at && (
+                  <p>📥 Received: {new Date(challan.received_at).toLocaleString("en-IN")}</p>
+                )}
+                {challan.returned_at && (
+                  <p>🔄 Returned: {new Date(challan.returned_at).toLocaleString("en-IN")}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* e-Way Bill tab */}
+      {tab === "ewb" && (
+        <EWayBillSection apiBase={`/api/challans/${id}`} subSupplyDefault={10} />
+      )}
     </div>
   );
 }
