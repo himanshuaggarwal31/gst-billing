@@ -169,7 +169,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       <EInvoiceSection invoiceId={id} />
 
       {/* e-Way Bill — shown for all invoices; required for goods movement >₹50k */}
-      <EWayBillSection invoiceId={id} />
+      <EWayBillSection apiBase={`/api/invoices/${id}`} />
     </div>
   );
 }

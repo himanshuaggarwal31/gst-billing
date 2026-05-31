@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,18 +138,19 @@ function ItemRow({
   );
 }
 
-export default function NewChallanPage() {
+export default function EditChallanPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [locations, setLocations] = useState<Location[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+  const [notDraft, setNotDraft] = useState(false);
 
   // Header fields
   const [challanNumber, setChallanNumber] = useState("");
-  const [challanDate, setChallanDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [challanDate, setChallanDate] = useState(new Date().toISOString().split("T")[0]);
   const [challanType, setChallanType] = useState<"delivery" | "job_work" | "return">("delivery");
   const [returnableType, setReturnableType] = useState<"returnable" | "non_returnable">("non_returnable");
   const [fromLocationId, setFromLocationId] = useState("");
@@ -159,32 +160,64 @@ export default function NewChallanPage() {
   const [driverName, setDriverName] = useState("");
   const [transporterName, setTransporterName] = useState("");
   const [notes, setNotes] = useState("");
-
   const [items, setItems] = useState<ItemForm[]>([{ ...EMPTY_ITEM }]);
 
   const loadData = useCallback(async () => {
-    const [locRes, clientRes, prodRes, profileRes] = await Promise.all([
+    const [locRes, clientRes, prodRes, challanRes] = await Promise.all([
       fetch("/api/locations"),
       fetch("/api/clients"),
       fetch("/api/products"),
-      fetch("/api/profile"),
+      fetch(`/api/challans/${id}`),
     ]);
-    const [locJson, clientJson, prodJson, profileJson] = await Promise.all([
-      locRes.json(), clientRes.json(), prodRes.json(), profileRes.json(),
+    const [locJson, clientJson, prodJson, challanJson] = await Promise.all([
+      locRes.json(), clientRes.json(), prodRes.json(), challanRes.json(),
     ]);
     if (locJson.data) setLocations(locJson.data);
     if (clientJson.data) setClients(clientJson.data);
     if (prodJson.data) setProducts(prodJson.data);
 
-    // Auto-generate challan number
-    if (profileJson.data) {
-      const prefix = profileJson.data.challan_prefix ?? "DCH-";
-      const res = await fetch("/api/challans");
-      const json = await res.json();
-      const count = (json.data?.length ?? 0) + 1;
-      setChallanNumber(`${prefix}${String(count).padStart(3, "0")}`);
+    if (challanJson.data) {
+      const c = challanJson.data;
+      if (c.status !== "draft") {
+        setNotDraft(true);
+        setLoadingData(false);
+        return;
+      }
+      setChallanNumber(c.challan_number ?? "");
+      setChallanDate(c.challan_date ?? new Date().toISOString().split("T")[0]);
+      setChallanType(c.challan_type ?? "delivery");
+      setReturnableType(c.returnable_type ?? "non_returnable");
+      setFromLocationId(c.from_location_id ?? "");
+      setToLocationId(c.to_location_id ?? "");
+      setClientId(c.client_id ?? "");
+      setVehicleNumber(c.vehicle_number ?? "");
+      setDriverName(c.driver_name ?? "");
+      setTransporterName(c.transporter_name ?? "");
+      setNotes(c.notes ?? "");
+
+      if (c.challan_items && c.challan_items.length > 0) {
+        const sorted = [...c.challan_items].sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
+        setItems(sorted.map((item: {
+          product_id: string | null;
+          description: string;
+          hsn_sac_code: string | null;
+          quantity: number;
+          unit: string;
+          remarks: string | null;
+        }) => ({
+          product_id:   item.product_id   ?? "",
+          description:  item.description,
+          hsn_sac_code: item.hsn_sac_code ?? "",
+          quantity:     String(item.quantity),
+          unit:         item.unit,
+          remarks:      item.remarks      ?? "",
+        })));
+      }
+    } else {
+      toast.error("Challan not found");
     }
-  }, []);
+    setLoadingData(false);
+  }, [id]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -206,35 +239,35 @@ export default function NewChallanPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/challans", {
-        method: "POST",
+      const res = await fetch(`/api/challans/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          challan_number: challanNumber,
-          challan_date: challanDate,
-          challan_type: challanType,
-          returnable_type: returnableType,
+          challan_number:   challanNumber,
+          challan_date:     challanDate,
+          challan_type:     challanType,
+          returnable_type:  returnableType,
           from_location_id: fromLocationId || null,
-          to_location_id: toLocationId || null,
-          client_id: clientId || null,
-          vehicle_number: vehicleNumber || null,
-          driver_name: driverName || null,
+          to_location_id:   toLocationId   || null,
+          client_id:        clientId        || null,
+          vehicle_number:   vehicleNumber   || null,
+          driver_name:      driverName      || null,
           transporter_name: transporterName || null,
-          notes: notes || null,
+          notes:            notes           || null,
           items: validItems.map((it) => ({
-            product_id: it.product_id || null,
-            description: it.description,
-            hsn_sac_code: it.hsn_sac_code,
-            quantity: parseFloat(it.quantity) || 1,
-            unit: it.unit,
-            remarks: it.remarks || null,
+            product_id:   it.product_id   || null,
+            description:  it.description,
+            hsn_sac_code: it.hsn_sac_code || null,
+            quantity:     parseFloat(it.quantity) || 1,
+            unit:         it.unit,
+            remarks:      it.remarks      || null,
           })),
         }),
       });
       const json = await res.json();
       if (json.error) { toast.error(json.error.message); return; }
-      toast.success("Challan created");
-      router.push(`/dashboard/challans/${json.data.id}`);
+      toast.success("Challan updated");
+      router.push(`/dashboard/challans/${id}`);
     } finally {
       setSubmitting(false);
     }
@@ -267,24 +300,34 @@ export default function NewChallanPage() {
     );
   }
 
+  if (loadingData) {
+    return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  }
+
+  if (notDraft) {
+    return (
+      <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/dashboard/challans/${id}`}>← Back</Link>
+          </Button>
+        </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <p className="font-semibold">This challan cannot be edited.</p>
+          <p className="mt-1">Only draft challans can be edited. This challan has already been dispatched or completed.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/challans">← Back</Link>
+          <Link href={`/dashboard/challans/${id}`}>← Back</Link>
         </Button>
-        <h1 className="text-xl font-bold">New Delivery Challan</h1>
+        <h1 className="text-xl font-bold">Edit Challan</h1>
       </div>
-
-      {locations.length === 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          No locations found.{" "}
-          <Link href="/dashboard/challans/locations" className="underline font-medium">
-            Add locations first
-          </Link>{" "}
-          (e.g. Main Warehouse, Project Alpha Site).
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Challan Header */}
@@ -414,10 +457,10 @@ export default function NewChallanPage() {
         {/* Submit */}
         <div className="flex gap-3 justify-end">
           <Button variant="outline" asChild>
-            <Link href="/dashboard/challans">Cancel</Link>
+            <Link href={`/dashboard/challans/${id}`}>Cancel</Link>
           </Button>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Creating…" : "Create Challan"}
+            {submitting ? "Saving…" : "Save Changes"}
           </Button>
         </div>
       </form>

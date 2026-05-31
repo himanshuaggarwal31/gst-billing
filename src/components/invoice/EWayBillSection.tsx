@@ -39,13 +39,17 @@ const DEFAULTS: EWayBillData = {
 
 const SUB_SUPPLY_TYPES = [
   { value: 1,  label: "Supply" },
+  { value: 2,  label: "Import" },
   { value: 3,  label: "Export" },
   { value: 4,  label: "Job Work" },
   { value: 5,  label: "For Own Use" },
   { value: 6,  label: "Job Work Returns" },
   { value: 7,  label: "Sales Return" },
   { value: 8,  label: "Others" },
+  { value: 9,  label: "SKD / CKD Assemblies" },
+  { value: 10, label: "Delivery Challan / Line Sales" },
   { value: 11, label: "Recipient Not Known" },
+  { value: 12, label: "Exhibition or Fairs" },
 ];
 
 const TRANSPORT_MODES = [
@@ -70,14 +74,22 @@ function sel(label: string, value: string, onChange: (v: string) => void, option
   );
 }
 
-export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
-  const [ewb, setEwb]           = useState<EWayBillData>(DEFAULTS);
+export function EWayBillSection({
+  apiBase,
+  subSupplyDefault = 1,
+}: {
+  /** e.g. "/api/invoices/abc123" or "/api/challans/abc123" */
+  apiBase: string;
+  /** Default sub_supply_type when no record exists yet (1=Supply, 10=Delivery Challan) */
+  subSupplyDefault?: number;
+}) {
+  const [ewb, setEwb]           = useState<EWayBillData>({ ...DEFAULTS, sub_supply_type: subSupplyDefault });
   const [loaded, setLoaded]     = useState(false);
   const [saving, setSaving]     = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/invoices/${invoiceId}/eway-bill`)
+    fetch(`${apiBase}/eway-bill`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
@@ -85,7 +97,7 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
           const d = json.data;
           setEwb({
             supply_type:      d.supply_type      ?? "O",
-            sub_supply_type:  d.sub_supply_type  ?? 1,
+            sub_supply_type:  d.sub_supply_type  ?? subSupplyDefault,
             transport_mode:   d.transport_mode   ?? "1",
             distance_km:      d.distance_km      ?? 0,
             transporter_name: d.transporter_name ?? "",
@@ -97,10 +109,14 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
             eway_bill_number: d.eway_bill_number ?? "",
             valid_until:      d.valid_until      ?? "",
           });
+        } else {
+          // No record yet — apply caller-specified defaults
+          setEwb({ ...DEFAULTS, sub_supply_type: subSupplyDefault });
         }
         setLoaded(true);
       });
-  }, [invoiceId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiBase]);
 
   function set<K extends keyof EWayBillData>(field: K, value: EWayBillData[K]) {
     setEwb((prev) => ({ ...prev, [field]: value }));
@@ -120,7 +136,7 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
         eway_bill_number: ewb.eway_bill_number  || null,
         valid_until:      ewb.valid_until        || null,
       };
-      const res  = await fetch(`/api/invoices/${invoiceId}/eway-bill`, {
+      const res  = await fetch(`${apiBase}/eway-bill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -141,7 +157,7 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
     await handleSave();
     setDownloading(true);
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/eway-bill/json`);
+      const res = await fetch(`${apiBase}/eway-bill/json`);
       if (!res.ok) {
         let msg = "Failed to generate JSON";
         try { const j = await res.json(); msg = j.error ?? msg; } catch { /* empty */ }
@@ -297,7 +313,7 @@ export function EWayBillSection({ invoiceId }: { invoiceId: string }) {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => window.open(`/api/invoices/${invoiceId}/eway-bill/pdf`, "_blank")}
+                  onClick={() => window.open(`${apiBase}/eway-bill/pdf`, "_blank")}
                 >
                   🖨 Print e-Way Bill
                 </Button>
