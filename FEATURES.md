@@ -98,7 +98,10 @@ Set up a recurring template for your retainer clients. The app auto-generates an
 ### 🧾 Credit Notes
 Issue a credit note against any invoice for returns or corrections. Fully GST-compliant, linked to the original invoice.
 
-### 💸 Expense Tracking
+### � Delivery Challans — Goods Movement Tracking
+Track the movement of reusable materials (scaffolding, equipment, tools) across all your locations — warehouse, project sites, and back. Create **Delivery**, **Job Work**, and **Return** challans with a single form. Mark items as **Returnable** (expected back from site) or **Non-Returnable**. Each challan follows a clear lifecycle: **Draft → Dispatched → Received → Returned** — so you always know where your goods are. Print a professional challan with signature boxes for driver, dispatcher, and receiver. Link challans to clients or vendors for job-work scenarios.
+
+### �💸 Expense Tracking
 Log your business purchases with GST paid. The app calculates your net GST liability (GST collected − GST paid on purchases) — exactly what your CA needs each quarter.
 
 ### � Payment Tracking
