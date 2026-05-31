@@ -8,6 +8,11 @@ import {
 import { stateLabel } from "@/lib/gst";
 import { amountInWords, resolveAccentColor } from "@/lib/pdf-utils";
 
+const THEME_ACCENTS: Record<string, string> = {
+  classic: "#1a56db",
+  minimal: "#6b7280",
+  modern:  "#7c3aed",
+};
 const DEFAULT_ACCENT = "#1a56db";
 
 const styles = StyleSheet.create({
@@ -158,6 +163,7 @@ const styles = StyleSheet.create({
 export type EWayBillPDFData = {
   invoice_number: string;
   invoice_date: string;
+  doc_label?: string;
   taxable_amount: number;
   total_cgst: number;
   total_sgst: number;
@@ -166,6 +172,7 @@ export type EWayBillPDFData = {
   total_amount: number;
   is_inter_state: boolean;
   accent_color?: string | null;
+  pdf_theme?: string | null;
   show_amount_in_words?: boolean | null;
   footer_text?: string | null;
   eway_bill: {
@@ -224,8 +231,10 @@ function fmtDate(d: string) {
 export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
   const lines = [...data.line_items].sort((a, b) => a.sort_order - b.sort_order);
   const ewb = data.eway_bill;
+  const docLabel = data.doc_label ?? "Invoice";
   const isRoad = ewb.transport_mode === "1";
-  const accent = resolveAccentColor(data.accent_color, DEFAULT_ACCENT);
+  const themeDefault = THEME_ACCENTS[data.pdf_theme ?? ""] ?? DEFAULT_ACCENT;
+  const accent = resolveAccentColor(data.accent_color, themeDefault);
   const effectiveFooter = data.footer_text?.trim() || "This is a computer-generated document";
 
   return (
@@ -253,11 +262,11 @@ export function EWayBillPDF({ data }: { data: EWayBillPDFData }) {
         {/* Invoice reference */}
         <View style={styles.docRef}>
           <View style={styles.docRefCell}>
-            <Text style={styles.docRefLabel}>Invoice No.</Text>
+            <Text style={styles.docRefLabel}>{docLabel} No.</Text>
             <Text style={styles.docRefValue}>{data.invoice_number}</Text>
           </View>
           <View style={styles.docRefCell}>
-            <Text style={styles.docRefLabel}>Invoice Date</Text>
+            <Text style={styles.docRefLabel}>{docLabel} Date</Text>
             <Text style={styles.docRefValue}>{fmtDate(data.invoice_date)}</Text>
           </View>
           <View style={styles.docRefCell}>

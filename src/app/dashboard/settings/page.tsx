@@ -428,44 +428,99 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground">Used as the default when creating new invoices or quotations. Can be overridden per document.</p>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label>Brand Accent Colour</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { hex: "#1a56db", label: "Classic Blue" },
-                      { hex: "#1d4ed8", label: "Royal Blue" },
-                      { hex: "#0ea5e9", label: "Sky Blue" },
-                      { hex: "#06b6d4", label: "Cyan" },
-                      { hex: "#0f766e", label: "Teal" },
-                      { hex: "#10b981", label: "Emerald" },
-                      { hex: "#166534", label: "Forest Green" },
-                      { hex: "#7c3aed", label: "Violet" },
-                      { hex: "#4f46e5", label: "Indigo" },
-                      { hex: "#db2777", label: "Pink" },
-                      { hex: "#9f1239", label: "Burgundy" },
-                      { hex: "#dc2626", label: "Red" },
-                      { hex: "#ea580c", label: "Orange" },
-                      { hex: "#d97706", label: "Amber" },
-                      { hex: "#374151", label: "Slate" },
-                      { hex: "#111827", label: "Charcoal" },
-                    ].map(({ hex, label }) => (
-                      <button
-                        key={hex}
-                        type="button"
-                        title={label}
-                        onClick={() => set("pdf_accent_color", form.pdf_accent_color === hex ? "" : hex)}
-                        className={`w-7 h-7 rounded-full border-2 transition-all ${
-                          form.pdf_accent_color === hex
-                            ? "border-gray-900 scale-110 shadow-md"
-                            : "border-transparent hover:border-gray-400"
-                        }`}
-                        style={{ backgroundColor: hex }}
-                      />
-                    ))}
-                    {form.pdf_accent_color && (
-                      <button type="button" onClick={() => set("pdf_accent_color", "")} className="text-xs text-muted-foreground hover:text-foreground underline self-center ml-1">Clear</button>
-                    )}
-                  </div>
+                  {[
+                    {
+                      family: "Blues & Teals",
+                      colors: [
+                        { hex: "#1a56db", label: "Classic Blue" },
+                        { hex: "#1d4ed8", label: "Royal Blue" },
+                        { hex: "#0ea5e9", label: "Sky Blue" },
+                        { hex: "#06b6d4", label: "Cyan" },
+                        { hex: "#0f766e", label: "Teal" },
+                        { hex: "#93c5fd", label: "Light Blue" },
+                        { hex: "#7dd3fc", label: "Pale Sky" },
+                        { hex: "#a5f3fc", label: "Ice" },
+                      ],
+                    },
+                    {
+                      family: "Greens",
+                      colors: [
+                        { hex: "#10b981", label: "Emerald" },
+                        { hex: "#166534", label: "Forest Green" },
+                        { hex: "#16a34a", label: "Green" },
+                        { hex: "#6ee7b7", label: "Mint" },
+                        { hex: "#86efac", label: "Light Green" },
+                        { hex: "#bbf7d0", label: "Pale Green" },
+                      ],
+                    },
+                    {
+                      family: "Purples & Indigo",
+                      colors: [
+                        { hex: "#7c3aed", label: "Violet" },
+                        { hex: "#4f46e5", label: "Indigo" },
+                        { hex: "#6366f1", label: "Purple-Blue" },
+                        { hex: "#c4b5fd", label: "Lavender" },
+                        { hex: "#a5b4fc", label: "Periwinkle" },
+                        { hex: "#ddd6fe", label: "Pale Lavender" },
+                      ],
+                    },
+                    {
+                      family: "Reds & Pinks",
+                      colors: [
+                        { hex: "#dc2626", label: "Red" },
+                        { hex: "#9f1239", label: "Burgundy" },
+                        { hex: "#db2777", label: "Pink" },
+                        { hex: "#f9a8d4", label: "Rose" },
+                        { hex: "#fecdd3", label: "Blush" },
+                      ],
+                    },
+                    {
+                      family: "Warm & Earth",
+                      colors: [
+                        { hex: "#ea580c", label: "Orange" },
+                        { hex: "#d97706", label: "Amber" },
+                        { hex: "#ca8a04", label: "Gold" },
+                        { hex: "#fdba74", label: "Peach" },
+                        { hex: "#fcd34d", label: "Yellow" },
+                        { hex: "#fef08a", label: "Pale Yellow" },
+                      ],
+                    },
+                    {
+                      family: "Neutrals",
+                      colors: [
+                        { hex: "#111827", label: "Charcoal" },
+                        { hex: "#374151", label: "Slate" },
+                        { hex: "#6b7280", label: "Gray" },
+                        { hex: "#9ca3af", label: "Silver" },
+                        { hex: "#d1d5db", label: "Light Gray" },
+                      ],
+                    },
+                  ].map(({ family, colors }) => (
+                    <div key={family} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-28 shrink-0">{family}</span>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {colors.map(({ hex, label }) => (
+                          <button
+                            key={hex}
+                            type="button"
+                            title={label}
+                            onClick={() => set("pdf_accent_color", form.pdf_accent_color === hex ? "" : hex)}
+                            className={`w-6 h-6 rounded-full border-2 transition-all ${
+                              form.pdf_accent_color === hex
+                                ? "border-gray-900 scale-110 shadow-md"
+                                : "border-transparent hover:border-gray-400"
+                            }`}
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {form.pdf_accent_color && (
+                    <button type="button" onClick={() => set("pdf_accent_color", "")} className="text-xs text-muted-foreground hover:text-foreground underline">Clear</button>
+                  )}
                   <p className="text-xs text-muted-foreground">Overrides the theme&apos;s default colour. Leave unset to use the theme default.</p>
                 </div>
               </CardContent>

@@ -33,14 +33,14 @@ const THEMES: Record<InvoiceTheme, {
     dividerColor: "#1a56db",
   },
   minimal: {
-    accent: "#111827",
+    accent: "#6b7280",
     tableHeaderBg: "#f3f4f6",
     tableHeaderColor: "#374151",
-    titleColor: "#111827",
+    titleColor: "#6b7280",
     partyBg: "#ffffff",
     partyBorder: "#d1d5db",
-    grandTotalColor: "#111827",
-    dividerColor: "#9ca3af",
+    grandTotalColor: "#6b7280",
+    dividerColor: "#d1d5db",
   },
   modern: {
     accent: "#7c3aed",
